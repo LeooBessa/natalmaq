@@ -1,0 +1,28 @@
+node_modules
+.next
+out
+.vercel
+.env
+.env.local
+.env*.local
+
+# TS incremental build artifact (autogerado)
+tsconfig.tsbuildinfo
+
+# Python
+__pycache__
+*.pyc
+.venv
+venv
+
+# Supabase
+.supabase
+supabase/.branches
+supabase/.temp
+
+# IDE
+.vscode
+.idea
+.DS_Store
+
+.vercel
