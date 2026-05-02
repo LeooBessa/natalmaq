@@ -115,9 +115,19 @@ A pasta `.vercel/` (que é gitignored) guarda o link do projeto. Cada máquina p
 
 ### 6) Deploy
 
+**Forma A — manual via CLI:**
 ```bash
 vercel --prod
 ```
+
+**Forma B — auto-deploy a cada push (recomendado):**
+
+1. Instale o [app Vercel para GitHub](https://github.com/apps/vercel/installations/new), autorizando o repositório `araujo19con/natalmaq`.
+2. Conecte o projeto Vercel ao repo:
+   ```bash
+   vercel git connect
+   ```
+3. Daí em diante todo `git push origin main` faz deploy automático.
 
 A Vercel detecta automaticamente:
 - `app/` → Next.js (`next build`)
