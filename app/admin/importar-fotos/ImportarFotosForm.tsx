@@ -1,31 +1,28 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useActionState } from "react";
 
-import { processarPdfFornecedorAction } from "./actions";
+import { processarPdfFornecedorAction, type ProcessarResult } from "./actions";
 import type { Marca } from "@/types";
 
 export function ImportarFotosForm({ marcas }: { marcas: Marca[] }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [state, formAction, pending] = useActionState<
+    ProcessarResult | undefined,
+    FormData
+  >(async (_prev, formData) => processarPdfFornecedorAction(formData), undefined);
 
-  function handleSubmit(formData: FormData) {
-    setError(null);
-    startTransition(async () => {
-      const res = await processarPdfFornecedorAction(formData);
-      if (!res.ok) {
-        setError(res.error ?? "Falha desconhecida");
-        return;
-      }
-      router.push(`/admin/importar-fotos/${res.id}` as never);
-    });
-  }
+  useEffect(() => {
+    if (state && state.ok) {
+      router.push(`/admin/importar-fotos/${state.id}` as never);
+    }
+  }, [state, router]);
 
   return (
     <form
-      action={handleSubmit}
+      action={formAction}
       className="space-y-4 rounded-lg border border-zinc-200 bg-white p-6"
     >
       <h2 className="font-semibold">Novo upload</h2>
@@ -68,9 +65,9 @@ export function ImportarFotosForm({ marcas }: { marcas: Marca[] }) {
         feche essa aba.
       </p>
 
-      {error && (
+      {state && !state.ok && (
         <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
+          {state.error}
         </div>
       )}
 
