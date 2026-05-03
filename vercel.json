@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "next build && rm -rf .next/cache",
   "functions": {
     "api/index.py": {
       "runtime": "@vercel/python@4.3.1",
