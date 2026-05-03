@@ -16,14 +16,22 @@ const nextConfig: NextConfig = {
     // bypassando esse limite.
     serverActions: { bodySizeLimit: "10mb" },
   },
-  // unpdf é serverless-friendly (~2MB vs 37MB do pdfjs-dist).
-  // Externaliza pra dynamic import e exclui caches/test dirs do bundle.
-  serverExternalPackages: ["unpdf", "pngjs"],
+  // pdfjs-dist é grande (37MB) mas decodifica JPEG2000 nativo. unpdf
+  // não tem OpenJPEG WASM, então perde ~70% das fotos em catálogos
+  // profissionais. .next/cache (226MB de webpack) é apagado no
+  // buildCommand do vercel.json — sem isso o bundle estoura 250MB.
+  serverExternalPackages: ["pdfjs-dist", "pngjs"],
   outputFileTracingExcludes: {
     "*": [
       ".next/cache/**",
       ".tmp/**",
       "scripts/**",
+      "node_modules/pdfjs-dist/build/**",
+      "node_modules/pdfjs-dist/cmaps/**",
+      "node_modules/pdfjs-dist/standard_fonts/**",
+      "node_modules/pdfjs-dist/web/**",
+      "node_modules/pdfjs-dist/image_decoders/**",
+      "node_modules/pdfjs-dist/types/**",
       "node_modules/@types/**",
       "node_modules/typescript/**",
       "node_modules/.cache/**",

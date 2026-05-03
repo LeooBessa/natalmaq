@@ -2,16 +2,14 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { PNG } from "pngjs";
-import { extractImages, getDocumentProxy } from "unpdf";
 
 /**
- * Extrator de catálogo de fornecedor (PDF) — usa `unpdf` (versão
- * serverless-friendly do pdfjs, ~2MB vs 37MB) para evitar estourar
- * o limite de 250MB de função na Vercel.
+ * Extrator de catálogo de fornecedor (PDF) — versão TypeScript da lib
+ * usada em scripts/extract-supplier-catalog.mjs. Devolve produtos
+ * detectados + imagens (PNG bytes + classificação) prontas pra subir
+ * no Supabase Storage.
  *
- * Devolve produtos detectados (tipo, modelo, tagline, bullets) +
- * imagens classificadas (produto/lifestyle/máscara/decorativo) prontas
- * pra subir no Storage.
+ * Tipagens leves no objeto pdfjs (operatorList tem fnArray/argsArray, etc).
  */
 
 // ─── Tipos ────────────────────────────────────────────────────
@@ -58,27 +56,55 @@ const TIPO_RE =
   /^(PARAFUSADEIRA|FURADEIRA|MARTELETE|ESMERILHADEIRA|SERRA|TUPIA|LIXADEIRA|PLAINA|CHAVE\s+DE\s+IMPACTO|PARAFUSADEIRA[/]FURADEIRA|MARTELO|FRESADORA|GRAMPEADOR|SOPRADOR|ASPIRADOR|HIDROLAVADORA|MULTIPROCESSADORA|JATEADORA|ROUTER|JIG\s*SAW|ROMPEDOR|MULTI[- ]?CORTADORA|TICO[- ]?TICO|RETIFICADEIRA|PISTOLA|COMPRESSOR)/i;
 const BULLET_RE = /^[fl•▪-]\s+(.+)/;
 
+// ─── Carregamento dinâmico do pdfjs ──────────────────────────
+async function loadPdfjs() {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  if (!(globalThis as { pdfjsWorker?: unknown }).pdfjsWorker) {
+    const worker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+    (globalThis as { pdfjsWorker?: unknown }).pdfjsWorker = worker;
+  }
+  return pdfjs as unknown as PdfjsLib;
+}
+
+type PdfjsLib = {
+  getDocument(args: { data: Uint8Array; useSystemFonts?: boolean }): {
+    promise: Promise<PdfDoc>;
+  };
+  OPS: Record<string, number>;
+};
+type PdfDoc = { numPages: number; getPage(n: number): Promise<PdfPage> };
+type PdfPage = {
+  getTextContent(): Promise<{ items: PdfTextItem[] }>;
+  getOperatorList(): Promise<{ fnArray: number[]; argsArray: unknown[][] }>;
+  objs: { has?: (n: string) => boolean; get: (n: string, cb?: (o: unknown) => void) => unknown };
+  commonObjs: { has?: (n: string) => boolean; get: (n: string) => unknown };
+};
 type PdfTextItem = { str: string; transform: number[] };
+type PdfImg = { width: number; height: number; kind: number; data: Uint8Array };
 
 // ─── Função principal ────────────────────────────────────────
 export async function extractSupplierCatalog(
   buffer: Buffer,
   opts?: { onProgress?: (page: number, total: number) => void },
 ): Promise<CatalogoExtraido> {
-  const data = new Uint8Array(buffer);
-  const pdf = await getDocumentProxy(data);
+  const pdfjs = await loadPdfjs();
+  const OPS = pdfjs.OPS;
+  const doc = await pdfjs.getDocument({
+    data: new Uint8Array(buffer),
+    useSystemFonts: true,
+  }).promise;
 
   const imageRegistry = new Map<string, ImagemExtraida>();
   const pageImagensProduto = new Map<number, string[]>();
   const pageProdutos = new Map<number, ProdutoExtraido[]>();
 
-  for (let p = 1; p <= pdf.numPages; p++) {
-    opts?.onProgress?.(p, pdf.numPages);
-    const page = await pdf.getPage(p);
+  for (let p = 1; p <= doc.numPages; p++) {
+    opts?.onProgress?.(p, doc.numPages);
+    const page = await doc.getPage(p);
     const text = await page.getTextContent();
+    const opList = await page.getOperatorList();
 
-    // Texto → produtos
-    const linhas = textPorLinha(text.items as PdfTextItem[]);
+    const linhas = textPorLinha(text.items);
     const produtos = extractProdutosFromLinhas(linhas).map((prod) => ({
       ...prod,
       page: p,
@@ -86,25 +112,31 @@ export async function extractSupplierCatalog(
     }));
     pageProdutos.set(p, produtos);
 
-    // Imagens via unpdf (mais simples — devolve já decoded com channels)
-    let images: Awaited<ReturnType<typeof extractImages>> = [];
-    try {
-      images = await extractImages(pdf, p);
-    } catch {
-      images = [];
-    }
-
+    const seenInPage = new Set<string>();
     const imagensProduto: string[] = [];
-    for (const img of images) {
-      if (!img.width || !img.height || !img.data) continue;
+    for (let i = 0; i < opList.fnArray.length; i++) {
+      const fn = opList.fnArray[i];
+      if (
+        fn !== OPS.paintImageXObject &&
+        fn !== OPS.paintImageXObjectRepeat &&
+        fn !== OPS.paintInlineImageXObject
+      )
+        continue;
+      const name = (opList.argsArray[i] as string[])[0];
+      if (seenInPage.has(name)) continue;
+      seenInPage.add(name);
+
+      const img = await getImageObj(page, name);
+      if (!img || !img.width || !img.height || !img.data) continue;
       if (img.width < 80 || img.height < 80) continue;
 
-      const rgba = toRGBAFromUnpdf(img);
+      const rgba = toRGBA(img);
       if (!rgba) continue;
       const hash = sha1(rgba);
 
       if (imageRegistry.has(hash)) {
-        if (imageRegistry.get(hash)!.tipo === "produto") imagensProduto.push(hash);
+        if (imageRegistry.get(hash)!.tipo === "produto")
+          imagensProduto.push(hash);
         continue;
       }
 
@@ -132,7 +164,7 @@ export async function extractSupplierCatalog(
 
   // Janela de páginas adjacentes p/ produtos sem foto
   const allProdutos: ProdutoExtraido[] = [];
-  for (let p = 1; p <= pdf.numPages; p++) {
+  for (let p = 1; p <= doc.numPages; p++) {
     const produtos = pageProdutos.get(p) ?? [];
     if (produtos.length === 0) continue;
 
@@ -153,7 +185,7 @@ export async function extractSupplierCatalog(
   }
 
   return {
-    total_paginas: pdf.numPages,
+    total_paginas: doc.numPages,
     produtos: allProdutos,
     imagens: imageRegistry,
   };
@@ -174,19 +206,42 @@ function dedupArray<T>(arr: T[]): T[] {
   return out;
 }
 
-/** Converte ExtractedImageObject (unpdf) → RGBA Buffer. */
-function toRGBAFromUnpdf(img: {
-  data: Uint8ClampedArray;
-  width: number;
-  height: number;
-  channels: 1 | 3 | 4;
-}): Buffer | null {
-  const { width, height, channels, data } = img;
+function getImageObj(page: PdfPage, name: string): Promise<PdfImg | null> {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (obj: PdfImg | null) => {
+      if (done) return;
+      done = true;
+      resolve(obj);
+    };
+    const timer = setTimeout(() => finish(null), 500);
+    try {
+      if (page.commonObjs.has?.(name)) {
+        clearTimeout(timer);
+        return finish(page.commonObjs.get(name) as PdfImg);
+      }
+      if (page.objs.has?.(name)) {
+        clearTimeout(timer);
+        return finish(page.objs.get(name) as PdfImg);
+      }
+      page.objs.get(name, (obj: unknown) => {
+        clearTimeout(timer);
+        finish(obj as PdfImg);
+      });
+    } catch {
+      clearTimeout(timer);
+      finish(null);
+    }
+  });
+}
+
+function toRGBA(img: PdfImg): Buffer | null {
+  const { width, height, kind, data } = img;
   const px = width * height;
-  if (channels === 4 && data.length >= px * 4) {
+  if (kind === 3 && data.length >= px * 4) {
     return Buffer.from(data.subarray(0, px * 4));
   }
-  if (channels === 3 && data.length >= px * 3) {
+  if (kind === 2 && data.length >= px * 3) {
     const out = Buffer.alloc(px * 4);
     for (let i = 0, j = 0; i < px * 3; i += 3, j += 4) {
       out[j] = data[i];
@@ -196,15 +251,25 @@ function toRGBAFromUnpdf(img: {
     }
     return out;
   }
-  if (channels === 1 && data.length >= px) {
+  if (kind === 1) {
     const out = Buffer.alloc(px * 4);
-    for (let i = 0, j = 0; i < px; i++, j += 4) {
-      out[j] = data[i];
-      out[j + 1] = data[i];
-      out[j + 2] = data[i];
-      out[j + 3] = 255;
+    const rowBytes = Math.ceil(width / 8);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const byte = data[y * rowBytes + (x >> 3)];
+        const bit = (byte >> (7 - (x & 7))) & 1;
+        const v = bit ? 255 : 0;
+        const j = (y * width + x) * 4;
+        out[j] = v;
+        out[j + 1] = v;
+        out[j + 2] = v;
+        out[j + 3] = 255;
+      }
     }
     return out;
+  }
+  if (data.length >= px * 4) {
+    return Buffer.from(data.subarray(0, px * 4));
   }
   return null;
 }
@@ -466,7 +531,10 @@ function extractProdutosFromLinhas(
   }));
 }
 
-function formatDescricao(b: { tagline: string; bullets: string[] }): string {
+function formatDescricao(b: {
+  tagline: string;
+  bullets: string[];
+}): string {
   const parts: string[] = [];
   if (b.tagline) parts.push(b.tagline);
   if (b.bullets.length > 0) {
