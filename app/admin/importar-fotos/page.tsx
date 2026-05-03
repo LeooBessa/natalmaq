@@ -9,16 +9,26 @@ export const metadata = { title: "Importar fotos de fornecedor" };
 
 export default async function ImportarFotosPage() {
   const sb = await createSupabaseServerClient();
-  const [{ data: marcas }, { data: imports }] = await Promise.all([
-    sb.from("marcas").select("id, nome, slug, logo_url").order("nome"),
-    sb
-      .from("imports_fotos")
-      .select(
-        "id, arquivo_pdf, status, total_paginas, total_produtos, total_imagens, criado_em, marca:marcas!imports_fotos_marca_id_fkey(nome)",
-      )
-      .order("criado_em", { ascending: false })
-      .limit(20),
-  ]);
+
+  const { data: marcas } = await sb
+    .from("marcas")
+    .select("id, nome, slug, logo_url")
+    .order("nome");
+
+  // imports_fotos pode não existir (migration 0005 ainda não aplicada).
+  // Trata erro silenciosamente e exibe um aviso pra admin aplicar.
+  const importsRes = await sb
+    .from("imports_fotos")
+    .select(
+      "id, arquivo_pdf, status, total_paginas, total_produtos, total_imagens, criado_em, marca:marcas!imports_fotos_marca_id_fkey(nome)",
+    )
+    .order("criado_em", { ascending: false })
+    .limit(20);
+
+  const imports = importsRes.data;
+  const migrationPendente =
+    !!importsRes.error &&
+    /relation .*imports_fotos.* does not exist/i.test(importsRes.error.message ?? "");
 
   return (
     <div className="space-y-8">
@@ -31,6 +41,18 @@ export default async function ImportarFotosPage() {
           aplica aos produtos do catálogo.
         </p>
       </div>
+
+      {migrationPendente && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-semibold">⚠️ Migration pendente</p>
+          <p className="mt-1">
+            A tabela <code className="rounded bg-amber-100 px-1 font-mono">imports_fotos</code>{" "}
+            ainda não foi criada. Aplique{" "}
+            <code className="rounded bg-amber-100 px-1 font-mono">supabase/migrations/0005_imports_fotos.sql</code>{" "}
+            no SQL Editor do Supabase antes de usar essa feature.
+          </p>
+        </div>
+      )}
 
       <ImportarFotosForm marcas={marcas ?? []} />
 
