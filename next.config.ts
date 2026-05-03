@@ -21,6 +21,12 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["pdfjs-dist", "pngjs"],
   outputFileTracingExcludes: {
     "*": [
+      // Cache do webpack (até 225MB!) — não deve ir no bundle de runtime
+      ".next/cache/**",
+      // Diretórios de teste/dev local
+      ".tmp/**",
+      "scripts/**",
+      // pdfjs-dist: 37MB de assets (cmaps, fonts, builds duplicados) não usados
       "node_modules/pdfjs-dist/build/**",
       "node_modules/pdfjs-dist/cmaps/**",
       "node_modules/pdfjs-dist/standard_fonts/**",

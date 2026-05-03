@@ -1,0 +1,7 @@
+.tmp
+.next/cache
+scripts
+*.md
+.git
+.github
+.vscode
