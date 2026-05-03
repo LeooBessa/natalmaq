@@ -16,9 +16,9 @@ const nextConfig: NextConfig = {
     // bypassando esse limite.
     serverActions: { bodySizeLimit: "10mb" },
   },
-  // Reduz o tamanho da função serverless: pdfjs-dist tem 37MB de assets
-  // (cmaps, fonts, builds duplicados) que não usamos. Sem isso o bundle
-  // estoura o limite de 250MB da Vercel.
+  // pdfjs-dist é grande (37MB). Externaliza no webpack pra não duplicar
+  // (lazy-load no runtime via require), e exclui assets não usados do trace.
+  serverExternalPackages: ["pdfjs-dist", "pngjs"],
   outputFileTracingExcludes: {
     "*": [
       "node_modules/pdfjs-dist/build/**",
