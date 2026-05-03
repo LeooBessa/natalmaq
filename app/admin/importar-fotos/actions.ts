@@ -5,50 +5,78 @@ import { revalidatePath } from "next/cache";
 import { extractSupplierCatalog } from "@/lib/supplier-catalog";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type ProcessarResult =
-  | { ok: true; id: string }
-  | { ok: false; error: string };
-
 const BUCKET = "fotos-import";
 
-export async function processarPdfFornecedorAction(
-  formData: FormData,
-): Promise<ProcessarResult> {
-  const file = formData.get("file");
-  const marcaId = formData.get("marca_id");
-  if (!(file instanceof File)) return { ok: false, error: "PDF inválido" };
-  if (typeof marcaId !== "string" || !marcaId)
-    return { ok: false, error: "Selecione a marca" };
+// ─────────────────────────────────────────────────────────────
+// 1) Cria registro e retorna o path onde o browser deve subir o PDF
+// ─────────────────────────────────────────────────────────────
+export type CriarResult =
+  | { ok: true; id: string; upload_path: string }
+  | { ok: false; error: string };
+
+export async function criarImportFotosAction(input: {
+  marca_id: string;
+  arquivo_pdf: string;
+}): Promise<CriarResult> {
+  if (!input.marca_id) return { ok: false, error: "Selecione a marca" };
+  if (!input.arquivo_pdf) return { ok: false, error: "PDF inválido" };
 
   const sb = await createSupabaseServerClient();
-
-  // 1) Cria registro
-  const { data: importRec, error: errIns } = await sb
+  const { data, error } = await sb
     .from("imports_fotos")
     .insert({
-      marca_id: marcaId,
-      arquivo_pdf: file.name,
+      marca_id: input.marca_id,
+      arquivo_pdf: input.arquivo_pdf,
       status: "processando",
     })
     .select("id")
     .single();
-  if (errIns) return { ok: false, error: errIns.message };
-  const importId = importRec.id as string;
+  if (error) return { ok: false, error: error.message };
 
-  // 2) Processa PDF
+  const upload_path = `${data.id}/raw.pdf`;
+  return { ok: true, id: data.id as string, upload_path };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2) Baixa o PDF do Storage, processa, sobe imagens, salva dados
+// ─────────────────────────────────────────────────────────────
+export type ProcessarResult = { ok: true } | { ok: false; error: string };
+
+export async function processarImportFotosAction(
+  importId: string,
+): Promise<ProcessarResult> {
+  const sb = await createSupabaseServerClient();
+
+  // Confirma que o registro existe e baixa o PDF
+  const { data: imp, error: errSel } = await sb
+    .from("imports_fotos")
+    .select("id, arquivo_pdf, status")
+    .eq("id", importId)
+    .maybeSingle();
+  if (errSel || !imp) return { ok: false, error: "Importação não encontrada" };
+
+  const pdfPath = `${importId}/raw.pdf`;
+  const { data: pdfData, error: errDl } = await sb.storage
+    .from(BUCKET)
+    .download(pdfPath);
+  if (errDl) return { ok: false, error: "Falha ao baixar PDF: " + errDl.message };
+
   let catalogo;
   try {
-    const buf = Buffer.from(await file.arrayBuffer());
+    const buf = Buffer.from(await pdfData.arrayBuffer());
     catalogo = await extractSupplierCatalog(buf);
   } catch (e) {
     await sb
       .from("imports_fotos")
       .update({ status: "cancelado" })
       .eq("id", importId);
-    return { ok: false, error: "Falha ao processar PDF: " + (e as Error).message };
+    return {
+      ok: false,
+      error: "Falha ao processar PDF: " + (e as Error).message,
+    };
   }
 
-  // 3) Sobe imagens (só produto + lifestyle — descarta máscara/decorativo)
+  // Sobe imagens classificadas como produto/lifestyle
   const imagensUteis = [...catalogo.imagens.values()].filter(
     (img) => img.tipo === "produto" || img.tipo === "lifestyle",
   );
@@ -64,13 +92,12 @@ export async function processarPdfFornecedorAction(
     }
   > = {};
 
-  // upload em paralelo (chunks de 10)
   const CHUNK = 10;
   for (let i = 0; i < imagensUteis.length; i += CHUNK) {
     const chunk = imagensUteis.slice(i, i + CHUNK);
     await Promise.all(
       chunk.map(async (img) => {
-        const path = `${importId}/${img.hash}.png`;
+        const path = `${importId}/imgs/${img.hash}.png`;
         const { error: errUp } = await sb.storage
           .from(BUCKET)
           .upload(path, img.png, {
@@ -90,11 +117,9 @@ export async function processarPdfFornecedorAction(
     );
   }
 
-  // 4) Marca como aguardando_review com payload
   const dados = {
     produtos: catalogo.produtos.map((p) => ({
       ...p,
-      // filtra os que sobreviveram ao upload
       imagens_candidatas_hashes: p.imagens_candidatas_hashes.filter(
         (h) => imagensMeta[h],
       ),
@@ -113,9 +138,9 @@ export async function processarPdfFornecedorAction(
       processado_em: new Date().toISOString(),
     })
     .eq("id", importId);
-
   if (errUp2) return { ok: false, error: errUp2.message };
 
   revalidatePath("/admin/importar-fotos");
-  return { ok: true, id: importId };
+  revalidatePath(`/admin/importar-fotos/${importId}`);
+  return { ok: true };
 }

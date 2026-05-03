@@ -11,9 +11,10 @@ const nextConfig: NextConfig = {
   },
   typedRoutes: true,
   experimental: {
-    // PDFs de fornecedor (Bosch, Makita, ...) chegam até ~25MB.
-    // Default do Server Action é 1mb.
-    serverActions: { bodySizeLimit: "50mb" },
+    // PDFs do Delphi (importação de planilha) chegam em ~1.5MB.
+    // PDFs de fornecedor (importar-fotos) sobem direto pro Storage,
+    // bypassando esse limite.
+    serverActions: { bodySizeLimit: "10mb" },
   },
   // Em dev: FastAPI roda separado em :8000.
   // Em prod (Vercel): vercel.json faz o rewrite para /api/index.py.
