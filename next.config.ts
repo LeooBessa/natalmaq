@@ -16,23 +16,14 @@ const nextConfig: NextConfig = {
     // bypassando esse limite.
     serverActions: { bodySizeLimit: "10mb" },
   },
-  // pdfjs-dist é grande (37MB). Externaliza no webpack pra não duplicar
-  // (lazy-load no runtime via require), e exclui assets não usados do trace.
-  serverExternalPackages: ["pdfjs-dist", "pngjs"],
+  // unpdf é serverless-friendly (~2MB vs 37MB do pdfjs-dist).
+  // Externaliza pra dynamic import e exclui caches/test dirs do bundle.
+  serverExternalPackages: ["unpdf", "pngjs"],
   outputFileTracingExcludes: {
     "*": [
-      // Cache do webpack (até 225MB!) — não deve ir no bundle de runtime
       ".next/cache/**",
-      // Diretórios de teste/dev local
       ".tmp/**",
       "scripts/**",
-      // pdfjs-dist: 37MB de assets (cmaps, fonts, builds duplicados) não usados
-      "node_modules/pdfjs-dist/build/**",
-      "node_modules/pdfjs-dist/cmaps/**",
-      "node_modules/pdfjs-dist/standard_fonts/**",
-      "node_modules/pdfjs-dist/web/**",
-      "node_modules/pdfjs-dist/image_decoders/**",
-      "node_modules/pdfjs-dist/types/**",
       "node_modules/@types/**",
       "node_modules/typescript/**",
       "node_modules/.cache/**",

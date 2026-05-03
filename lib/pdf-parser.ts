@@ -8,8 +8,6 @@
  *    fabricante (centro, antes da coluna Loja).
  */
 
-type PdfDoc = { numPages: number; getPage(n: number): Promise<PdfPage> };
-type PdfPage = { getTextContent(): Promise<{ items: PdfTextItem[] }> };
 type PdfTextItem = {
   str: string;
   transform: number[];
@@ -27,19 +25,6 @@ export type PdfProdutoRow = {
 };
 
 type ColumnX = { descricao: number; fabricante: number; loja: number };
-
-async function loadPdfjs() {
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  if (!(globalThis as { pdfjsWorker?: unknown }).pdfjsWorker) {
-    const worker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
-    (globalThis as { pdfjsWorker?: unknown }).pdfjsWorker = worker;
-  }
-  return pdfjs as unknown as {
-    getDocument(args: { data: Uint8Array; useSystemFonts?: boolean }): {
-      promise: Promise<PdfDoc>;
-    };
-  };
-}
 
 function parseBrNumber(s: string): number | null {
   if (!s) return null;
@@ -99,11 +84,8 @@ const NUM_BR_RE = /([\d\.]+,\d+)/;
 export async function extractProdutosFromPdf(
   buffer: Buffer,
 ): Promise<{ rows: PdfProdutoRow[]; warnings: string[] }> {
-  const pdfjs = await loadPdfjs();
-  const doc = await pdfjs.getDocument({
-    data: new Uint8Array(buffer),
-    useSystemFonts: true,
-  }).promise;
+  const { getDocumentProxy } = await import("unpdf");
+  const doc = await getDocumentProxy(new Uint8Array(buffer));
 
   const warnings: string[] = [];
   const rows: PdfProdutoRow[] = [];
@@ -112,7 +94,7 @@ export async function extractProdutosFromPdf(
   for (let p = 1; p <= doc.numPages; p++) {
     const page = await doc.getPage(p);
     const content = await page.getTextContent();
-    const lines = groupLines(content.items);
+    const lines = groupLines(content.items as PdfTextItem[]);
 
     if (!columns) {
       columns = findHeaderColumns(lines);
