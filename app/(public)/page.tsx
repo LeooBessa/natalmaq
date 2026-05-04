@@ -1,12 +1,14 @@
 import Link from "next/link";
 
+import { BannerCarousel } from "@/components/home/BannerCarousel";
 import { ProductCard } from "@/components/catalog/ProductCard";
-import { listCategorias, listMarcas, listProdutos } from "@/lib/data";
+import { listBanners, listCategorias, listMarcas, listProdutos } from "@/lib/data";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [destaques, categorias, marcas] = await Promise.all([
+  const [banners, destaques, categorias, marcas] = await Promise.all([
+    listBanners(),
     listProdutos({ page: 1 }),
     listCategorias(),
     listMarcas(),
@@ -17,110 +19,63 @@ export default async function HomePage() {
 
   return (
     <div>
+      {/* BANNERS ─────────────────────────────────────────── */}
+      <BannerCarousel banners={banners} />
+
       {/* HERO ─────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-navy text-white">
         <div className="absolute inset-0 bg-hatch-orange" />
-        <div className="relative mx-auto grid max-w-[1280px] gap-0 md:grid-cols-[1.1fr_1fr] md:min-h-[480px]">
-          <div className="flex flex-col justify-center px-6 py-16 md:py-20 md:pl-10 md:pr-14">
-            <div className="mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-mono text-brand-400">
-              <span className="block h-px w-8 bg-brand-500" />
-              EDIÇÃO 2026 · CATÁLOGO INDUSTRIAL
-            </div>
-            <h1 className="font-display text-[42px] leading-[0.95] tracking-tight md:text-[64px] lg:text-[72px]">
-              FERRAMENTAS
-              <br />
-              QUE <span className="text-brand-500">NÃO PARAM</span>
-              <br />
-              A SUA OBRA.
-            </h1>
-            <p className="mt-6 max-w-[480px] text-[15px] leading-relaxed text-white/70">
-              Mais de 1.600 SKUs em estoque. Marcas profissionais, atendimento
-              técnico e orçamento em até 2 horas para construtoras, indústrias e
-              prestadores de serviço.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/catalogo"
-                className="bg-brand-500 px-7 py-4 text-sm font-extrabold uppercase tracking-wide text-white hover:bg-brand-400"
-              >
-                Explorar catálogo →
-              </Link>
-              <Link
-                href="/carrinho"
-                className="border border-white/40 px-7 py-4 text-sm text-white hover:bg-white/10"
-              >
-                Solicitar orçamento em volume
-              </Link>
-            </div>
-
-            <div className="mt-12 grid grid-cols-2 gap-0 border-t border-white/15 pt-6 md:grid-cols-4">
-              {[
-                ["1.670+", "SKUs ATIVOS"],
-                ["18 ANOS", "NO MERCADO"],
-                ["2H", "COTAÇÃO MÉDIA"],
-                ["98%", "ENTREGA NO PRAZO"],
-              ].map(([n, l], i) => (
-                <div
-                  key={l}
-                  className={
-                    i < 3 ? "border-r border-white/15 pr-4" : "pr-4"
-                  }
-                >
-                  <div className="font-display text-[26px] tracking-tight text-brand-400">
-                    {n}
-                  </div>
-                  <div className="mt-1 font-mono text-[10px] uppercase tracking-mono text-white/60">
-                    {l}
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="relative mx-auto max-w-[1280px] px-6 py-16 md:py-20 md:px-10">
+          <div className="mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-mono text-brand-400">
+            <span className="block h-px w-8 bg-brand-500" />
+            EDIÇÃO 2026 · CATÁLOGO INDUSTRIAL
+          </div>
+          <h1 className="font-display text-[42px] leading-[0.95] tracking-tight md:text-[64px] lg:text-[72px]">
+            FERRAMENTAS
+            <br />
+            QUE <span className="text-brand-500">NÃO PARAM</span>
+            <br />
+            A SUA OBRA.
+          </h1>
+          <p className="mt-6 max-w-[560px] text-[15px] leading-relaxed text-white/70">
+            Mais de 1.600 SKUs em estoque. Marcas profissionais, atendimento
+            técnico e orçamento em até 2 horas para construtoras, indústrias e
+            prestadores de serviço.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/catalogo"
+              className="bg-brand-500 px-7 py-4 text-sm font-extrabold uppercase tracking-wide text-white hover:bg-brand-400"
+            >
+              Explorar catálogo →
+            </Link>
+            <Link
+              href="/carrinho"
+              className="border border-white/40 px-7 py-4 text-sm text-white hover:bg-white/10"
+            >
+              Solicitar orçamento em volume
+            </Link>
           </div>
 
-          {/* Right: featured spec card */}
-          <div className="relative flex items-center justify-center border-l border-white/10 bg-navy-800 px-6 py-12 md:px-10">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 14px)",
-              }}
-            />
-            <div className="relative w-full max-w-md border border-brand-500 bg-navy/90 p-6">
-              <div className="mb-4 flex items-start justify-between">
-                <div>
-                  <div className="font-mono text-[10px] uppercase tracking-mono text-brand-400">
-                    DESTAQUE DO MÊS · MKT-HP1640
-                  </div>
-                  <div className="mt-1 text-[18px] font-extrabold tracking-tight">
-                    Furadeira de Impacto Makita 1/2&quot;
-                  </div>
-                </div>
-                <div className="bg-brand-500 px-2 py-1 font-mono text-[11px] font-bold">
-                  −12%
-                </div>
-              </div>
-              <div className="mb-4 grid grid-cols-3 gap-3 text-[12px]">
-                {[
-                  ["POTÊNCIA", "710 W"],
-                  ["MANDRIL", "13 mm"],
-                  ["RPM", "0–2.800"],
-                ].map(([k, v]) => (
-                  <div key={k}>
-                    <div className="font-mono text-[10px] uppercase tracking-mono text-white/50">
-                      {k}
-                    </div>
-                    <div className="font-semibold">{v}</div>
-                  </div>
-                ))}
-              </div>
-              <Link
-                href="/catalogo"
-                className="block w-full bg-brand-500 py-3 text-center font-mono text-[12px] font-bold uppercase tracking-mono text-white hover:bg-brand-400"
+          <div className="mt-12 grid grid-cols-2 gap-0 border-t border-white/15 pt-6 md:grid-cols-4">
+            {[
+              ["1.670+", "SKUs ATIVOS"],
+              ["18 ANOS", "NO MERCADO"],
+              ["2H", "COTAÇÃO MÉDIA"],
+              ["98%", "ENTREGA NO PRAZO"],
+            ].map(([n, l], i) => (
+              <div
+                key={l}
+                className={i < 3 ? "border-r border-white/15 pr-4" : "pr-4"}
               >
-                Ver ficha técnica →
-              </Link>
-            </div>
+                <div className="font-display text-[26px] tracking-tight text-brand-400">
+                  {n}
+                </div>
+                <div className="mt-1 font-mono text-[10px] uppercase tracking-mono text-white/60">
+                  {l}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
