@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { NavStrip } from "@/components/NavStrip";
 import { SearchAutocomplete } from "@/components/catalog/SearchAutocomplete";
+import { UserNav } from "@/components/UserNav";
 import { useCart } from "@/lib/cart-store";
 import type { Categoria, Marca } from "@/types";
 
@@ -28,9 +29,7 @@ export function Header({ categorias, marcas }: Props) {
           <div className="flex items-center gap-5">
             <span>(84) 3000-0000</span>
             <span>VENDAS@NATALMAQ.COM.BR</span>
-            <Link href={"/admin/login" as never} className="hover:text-white">
-              ENTRAR
-            </Link>
+            <UserNav />
           </div>
         </div>
       </div>

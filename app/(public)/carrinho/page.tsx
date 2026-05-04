@@ -160,7 +160,7 @@ export default function CarrinhoPage() {
                 href="/checkout"
                 className="mt-5 block w-full bg-brand-500 py-4 text-center font-mono text-[12px] font-bold uppercase tracking-mono text-white hover:bg-brand-400"
               >
-                Solicitar orçamento via WhatsApp →
+                Continuar pedido →
               </Link>
               <Link
                 href="/catalogo"
