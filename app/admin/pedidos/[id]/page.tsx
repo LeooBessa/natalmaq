@@ -44,12 +44,13 @@ export default async function PedidoDetalhePage({
 
   const { data: itens } = await sb
     .from("pedido_itens")
-    .select("id, codigo, nome_snapshot, quantidade, preco_unit, preco_total, disponivel")
+    .select("id, codigo, nome_snapshot, quantidade, preco_unit, preco_total, disponivel, desconto_perc")
     .eq("pedido_id", id);
 
   const itensNorm = (itens ?? []).map((i) => ({
     ...i,
     disponivel: i.disponivel ?? true,
+    desconto_perc: Number(i.desconto_perc ?? 0),
     preco_total: Number(i.preco_total),
     preco_unit: Number(i.preco_unit),
   }));
@@ -206,7 +207,7 @@ export default async function PedidoDetalhePage({
           <PedidoEditor
             pedidoId={pedido.id}
             itens={itensNorm}
-            descontoInicial={Number(pedido.desconto ?? 0)}
+            descontoGeralInicial={Number(pedido.desconto ?? 0)}
             freteInicial={Number(pedido.frete_valor)}
             formaPagamentoInicial={pedido.forma_pagamento ?? null}
           />

@@ -10,39 +10,88 @@ type Item = {
   quantidade: number;
   preco_total: number;
   disponivel: boolean;
+  desconto_perc: number;
 };
 
 type Props = {
   pedidoId: string;
   itens: Item[];
-  descontoInicial: number;
+  descontoGeralInicial: number;
   freteInicial: number;
   formaPagamentoInicial: string | null;
 };
 
-const FORMAS_PAGAMENTO = [
+const METODOS = [
   { value: "", label: "Não informado" },
-  { value: "pix", label: "PIX (à vista)" },
-  { value: "dinheiro", label: "Dinheiro (à vista)" },
-  { value: "cartao_debito", label: "Cartão de débito" },
-  { value: "cartao_credito_1x", label: "Cartão de crédito à vista" },
-  { value: "cartao_credito_3x", label: "Cartão de crédito 3×" },
-  { value: "cartao_credito_6x", label: "Cartão de crédito 6×" },
-  { value: "cartao_credito_12x", label: "Cartão de crédito 12×" },
-  { value: "boleto_30", label: "Boleto 30 dias" },
-  { value: "boleto_30_60", label: "Boleto 30/60 dias" },
-  { value: "boleto_30_60_90", label: "Boleto 30/60/90 dias" },
-  { value: "faturado_28", label: "Faturado 28 dias" },
+  { value: "pix", label: "PIX" },
+  { value: "dinheiro", label: "Dinheiro" },
+  { value: "debito", label: "Cartão de débito" },
+  { value: "credito", label: "Cartão de crédito" },
+  { value: "boleto", label: "Boleto bancário" },
+  { value: "faturado", label: "Faturado" },
 ];
+
+function parseFormaPagamento(fp: string | null): { metodo: string; condicao: string } {
+  if (!fp) return { metodo: "", condicao: "" };
+  if (fp.startsWith("PIX")) return { metodo: "pix", condicao: "" };
+  if (fp.startsWith("Dinheiro")) return { metodo: "dinheiro", condicao: "" };
+  if (fp.startsWith("Cartão de débito")) return { metodo: "debito", condicao: "" };
+  if (fp.startsWith("Cartão de crédito")) {
+    const m = fp.match(/(\d+)/);
+    return { metodo: "credito", condicao: m ? m[1] : "" };
+  }
+  if (fp.startsWith("Boleto")) {
+    const m = fp.match(/Boleto\s+(.+?)\s+dias/);
+    return { metodo: "boleto", condicao: m ? m[1] : "" };
+  }
+  if (fp.startsWith("Faturado")) {
+    const m = fp.match(/Faturado\s+(.+?)\s+dias/);
+    return { metodo: "faturado", condicao: m ? m[1] : "" };
+  }
+  return { metodo: "", condicao: fp };
+}
+
+function buildFormaPagamento(metodo: string, condicao: string): string {
+  switch (metodo) {
+    case "pix": return "PIX à vista";
+    case "dinheiro": return "Dinheiro à vista";
+    case "debito": return "Cartão de débito";
+    case "credito":
+      return condicao ? `Cartão de crédito ${condicao}×` : "Cartão de crédito à vista";
+    case "boleto":
+      return condicao ? `Boleto ${condicao} dias` : "Boleto bancário";
+    case "faturado":
+      return condicao ? `Faturado ${condicao} dias` : "Faturado";
+    default: return "";
+  }
+}
+
+function showsCondicao(metodo: string) {
+  return ["credito", "boleto", "faturado"].includes(metodo);
+}
+
+function condicaoLabel(metodo: string) {
+  return metodo === "credito" ? "Nº de parcelas" : "Prazo (dias)";
+}
+
+function condicaoPlaceholder(metodo: string) {
+  if (metodo === "credito") return "Ex: 6";
+  if (metodo === "boleto") return "Ex: 30/60/90";
+  if (metodo === "faturado") return "Ex: 28";
+  return "";
+}
 
 function fmt(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+const inputCls =
+  "w-full rounded border border-zinc-300 px-3 py-1.5 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-200";
+
 export function PedidoEditor({
   pedidoId,
   itens,
-  descontoInicial,
+  descontoGeralInicial,
   freteInicial,
   formaPagamentoInicial,
 }: Props) {
@@ -50,26 +99,43 @@ export function PedidoEditor({
   const [erro, setErro] = useState<string | null>(null);
   const [salvo, setSalvo] = useState(false);
 
-  const [desconto, setDesconto] = useState(descontoInicial.toFixed(2));
+  const [descontoGeral, setDescontoGeral] = useState(descontoGeralInicial.toFixed(2));
   const [frete, setFrete] = useState(freteInicial.toFixed(2));
-  const [formaPagamento, setFormaPagamento] = useState(
-    formaPagamentoInicial ?? "",
-  );
-  const [disponibilidade, setDisponibilidade] = useState<
-    Record<string, boolean>
-  >(Object.fromEntries(itens.map((i) => [i.id, i.disponivel])));
 
-  const descontoNum = parseFloat(desconto) || 0;
+  const parsed = parseFormaPagamento(formaPagamentoInicial);
+  const [metodo, setMetodo] = useState(parsed.metodo);
+  const [condicao, setCondicao] = useState(parsed.condicao);
+
+  const [disponibilidade, setDisponibilidade] = useState<Record<string, boolean>>(
+    Object.fromEntries(itens.map((i) => [i.id, i.disponivel])),
+  );
+  const [descontosItem, setDescontosItem] = useState<Record<string, string>>(
+    Object.fromEntries(
+      itens.map((i) => [i.id, i.desconto_perc > 0 ? String(i.desconto_perc) : ""]),
+    ),
+  );
+
+  const descontoGeralNum = parseFloat(descontoGeral) || 0;
   const freteNum = parseFloat(frete) || 0;
+
+  function itemEfetivo(item: Item): number {
+    const disc = parseFloat(descontosItem[item.id] || "0") || 0;
+    return item.preco_total * (1 - disc / 100);
+  }
 
   const subtotalDisponivel = itens
     .filter((i) => disponibilidade[i.id])
-    .reduce((sum, i) => sum + i.preco_total, 0);
+    .reduce((sum, i) => sum + itemEfetivo(i), 0);
 
-  const totalCalculado = Math.max(0, subtotalDisponivel - descontoNum + freteNum);
+  const totalCalculado = Math.max(0, subtotalDisponivel - descontoGeralNum + freteNum);
 
   function toggleItem(id: string) {
     setDisponibilidade((prev) => ({ ...prev, [id]: !prev[id] }));
+    setSalvo(false);
+  }
+
+  function setDiscItem(id: string, val: string) {
+    setDescontosItem((prev) => ({ ...prev, [id]: val }));
     setSalvo(false);
   }
 
@@ -77,11 +143,16 @@ export function PedidoEditor({
     setErro(null);
     setSalvo(false);
     startTransition(async () => {
+      const forma = buildFormaPagamento(metodo, condicao);
       const r = await editarPedidoAction(pedidoId, {
-        desconto: descontoNum,
+        desconto: descontoGeralNum,
         frete_valor: freteNum,
-        forma_pagamento: formaPagamento,
-        itens: itens.map((i) => ({ id: i.id, disponivel: disponibilidade[i.id] })),
+        forma_pagamento: forma,
+        itens: itens.map((i) => ({
+          id: i.id,
+          disponivel: disponibilidade[i.id],
+          desconto_perc: parseFloat(descontosItem[i.id] || "0") || 0,
+        })),
       });
       if (r.ok) setSalvo(true);
       else setErro(r.error ?? "Erro ao salvar");
@@ -92,87 +163,133 @@ export function PedidoEditor({
     <div className="space-y-5 rounded-lg border border-zinc-200 bg-white p-5">
       <h2 className="font-semibold text-zinc-900">Editar pedido</h2>
 
-      {/* Ajustes financeiros */}
+      {/* Desconto geral + Frete */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-500">
-            Desconto adicional (R$)
+          <label htmlFor="desconto-geral" className="mb-1 block text-xs font-medium text-zinc-500">
+            Desconto geral (R$)
           </label>
           <input
+            id="desconto-geral"
             type="number"
             min="0"
             step="0.01"
-            value={desconto}
-            onChange={(e) => {
-              setDesconto(e.target.value);
-              setSalvo(false);
-            }}
-            className="w-full rounded border border-zinc-300 px-3 py-1.5 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
+            value={descontoGeral}
+            onChange={(e) => { setDescontoGeral(e.target.value); setSalvo(false); }}
+            className={inputCls}
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-500">
+          <label htmlFor="frete" className="mb-1 block text-xs font-medium text-zinc-500">
             Frete (R$)
           </label>
           <input
+            id="frete"
             type="number"
             min="0"
             step="0.01"
             value={frete}
-            onChange={(e) => {
-              setFrete(e.target.value);
-              setSalvo(false);
-            }}
-            className="w-full rounded border border-zinc-300 px-3 py-1.5 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
+            onChange={(e) => { setFrete(e.target.value); setSalvo(false); }}
+            className={inputCls}
           />
         </div>
       </div>
 
-      <div>
-        <label className="mb-1 block text-xs font-medium text-zinc-500">
-          Forma de pagamento
-        </label>
-        <select
-          value={formaPagamento}
-          onChange={(e) => {
-            setFormaPagamento(e.target.value);
-            setSalvo(false);
-          }}
-          className="w-full rounded border border-zinc-300 px-3 py-1.5 text-sm outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-200"
-        >
-          {FORMAS_PAGAMENTO.map((f) => (
-            <option key={f.value} value={f.value}>
-              {f.label}
-            </option>
-          ))}
-        </select>
+      {/* Forma de pagamento */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="metodo-pagamento" className="mb-1 block text-xs font-medium text-zinc-500">
+            Forma de pagamento
+          </label>
+          <select
+            id="metodo-pagamento"
+            value={metodo}
+            onChange={(e) => { setMetodo(e.target.value); setCondicao(""); setSalvo(false); }}
+            className={inputCls}
+          >
+            {METODOS.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
+        {showsCondicao(metodo) && (
+          <div>
+            <label htmlFor="condicao-pagamento" className="mb-1 block text-xs font-medium text-zinc-500">
+              {condicaoLabel(metodo)}
+            </label>
+            <input
+              id="condicao-pagamento"
+              type={metodo === "credito" ? "number" : "text"}
+              min={metodo === "credito" ? 1 : undefined}
+              value={condicao}
+              onChange={(e) => { setCondicao(e.target.value); setSalvo(false); }}
+              placeholder={condicaoPlaceholder(metodo)}
+              className={inputCls}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Disponibilidade dos itens */}
+      {/* Desconto por item + disponibilidade */}
       <div>
         <p className="mb-2 text-xs font-medium text-zinc-500">
-          Disponibilidade dos itens
+          Desconto por produto e disponibilidade
         </p>
         <div className="divide-y divide-zinc-100 rounded border border-zinc-200">
           {itens.map((item) => {
             const disp = disponibilidade[item.id];
+            const discStr = descontosItem[item.id] || "";
+            const discPerc = parseFloat(discStr) || 0;
+            const efetivo = item.preco_total * (1 - discPerc / 100);
+            const temDesconto = discPerc > 0;
+
             return (
               <div
                 key={item.id}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm ${!disp ? "bg-red-50" : ""}`}
+                className={`flex items-center gap-2 px-3 py-2.5 ${!disp ? "bg-red-50" : ""}`}
               >
-                <div className={`min-w-0 flex-1 ${!disp ? "text-zinc-400" : "text-zinc-800"}`}>
-                  <span className="mr-1.5 font-mono text-xs text-zinc-400">
-                    {item.codigo}
-                  </span>
+                {/* Info do item */}
+                <div className={`min-w-0 flex-1 text-sm ${!disp ? "text-zinc-400" : "text-zinc-800"}`}>
+                  <span className="mr-1 font-mono text-xs text-zinc-400">{item.codigo}</span>
                   <span className={!disp ? "line-through" : ""}>{item.nome_snapshot}</span>
-                  <span className="ml-1.5 text-xs text-zinc-400">×{item.quantidade}</span>
+                  <span className="ml-1 text-xs text-zinc-400">×{item.quantidade}</span>
                 </div>
-                <span
-                  className={`text-xs font-semibold ${!disp ? "text-zinc-400 line-through" : "text-zinc-700"}`}
-                >
-                  {fmt(item.preco_total)}
-                </span>
+
+                {/* Input de desconto % */}
+                <div className="flex shrink-0 items-center gap-1">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={discStr}
+                    onChange={(e) => setDiscItem(item.id, e.target.value)}
+                    placeholder="0"
+                    aria-label={`Desconto % em ${item.nome_snapshot}`}
+                    className="w-14 rounded border border-zinc-300 px-2 py-1 text-center text-xs outline-none focus:border-brand-500"
+                  />
+                  <span className="text-xs text-zinc-400">%</span>
+                </div>
+
+                {/* Preço */}
+                <div className="shrink-0 text-right">
+                  {temDesconto ? (
+                    <>
+                      <div className="text-[11px] leading-none text-zinc-400 line-through">
+                        {fmt(item.preco_total)}
+                      </div>
+                      <div className="text-sm font-semibold text-brand-600">
+                        {fmt(efetivo)}
+                      </div>
+                    </>
+                  ) : (
+                    <div className={`text-sm font-semibold ${!disp ? "text-zinc-400 line-through" : "text-zinc-700"}`}>
+                      {fmt(item.preco_total)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Toggle disponível */}
                 <button
                   type="button"
                   onClick={() => toggleItem(item.id)}
@@ -193,19 +310,27 @@ export function PedidoEditor({
       {/* Preview do total */}
       <div className="space-y-1 rounded bg-zinc-50 p-3 text-sm">
         <div className="flex justify-between text-zinc-500">
-          <span>Subtotal (itens disponíveis)</span>
+          <span>Subtotal (c/ descontos por item)</span>
           <span>{fmt(subtotalDisponivel)}</span>
         </div>
-        {descontoNum > 0 && (
+        {descontoGeralNum > 0 && (
           <div className="flex justify-between text-zinc-500">
-            <span>Desconto</span>
-            <span className="text-red-600">−{fmt(descontoNum)}</span>
+            <span>Desconto geral</span>
+            <span className="text-red-600">−{fmt(descontoGeralNum)}</span>
           </div>
         )}
         <div className="flex justify-between text-zinc-500">
           <span>Frete</span>
           <span>{fmt(freteNum)}</span>
         </div>
+        {metodo && (
+          <div className="flex justify-between text-zinc-500">
+            <span>Pagamento</span>
+            <span className="font-medium text-zinc-700">
+              {buildFormaPagamento(metodo, condicao)}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between border-t border-zinc-200 pt-1.5 font-bold text-zinc-900">
           <span>Total calculado</span>
           <span>{fmt(totalCalculado)}</span>

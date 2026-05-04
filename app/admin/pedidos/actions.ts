@@ -34,31 +34,35 @@ export async function editarPedidoAction(
     desconto: number;
     frete_valor: number;
     forma_pagamento: string;
-    itens: { id: string; disponivel: boolean }[];
+    itens: { id: string; disponivel: boolean; desconto_perc: number }[];
   },
 ): Promise<{ ok: boolean; error?: string }> {
   const sb = await createSupabaseServerClient();
 
-  // Atualiza disponibilidade de cada item
+  // Atualiza disponibilidade e desconto de cada item
   for (const item of data.itens) {
     const { error } = await sb
       .from("pedido_itens")
-      .update({ disponivel: item.disponivel })
+      .update({ disponivel: item.disponivel, desconto_perc: item.desconto_perc })
       .eq("id", item.id);
     if (error) return { ok: false, error: error.message };
   }
 
-  // Recalcula subtotal com base nos itens disponíveis
+  // Recalcula subtotal: itens disponíveis com desconto por item aplicado
   const { data: itens, error: itensErr } = await sb
     .from("pedido_itens")
-    .select("preco_total, disponivel")
+    .select("preco_total, desconto_perc, disponivel")
     .eq("pedido_id", pedidoId);
 
   if (itensErr) return { ok: false, error: itensErr.message };
 
   const subtotal = (itens ?? [])
     .filter((i) => i.disponivel)
-    .reduce((sum, i) => sum + Number(i.preco_total), 0);
+    .reduce(
+      (sum, i) =>
+        sum + Number(i.preco_total) * (1 - Number(i.desconto_perc ?? 0) / 100),
+      0,
+    );
 
   const total = Math.max(0, subtotal - data.desconto + data.frete_valor);
 
