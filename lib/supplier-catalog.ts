@@ -206,6 +206,7 @@ export async function extractSupplierCatalog(
     total_paginas: doc.numPages,
     produtos: allProdutos,
     imagens: imageRegistry,
+    isFullDoc,
   };
 }
 
