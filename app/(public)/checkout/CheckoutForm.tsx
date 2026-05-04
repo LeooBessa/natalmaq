@@ -180,6 +180,24 @@ export function CheckoutForm({ userId, cliente }: Props) {
 
       <div className="mx-auto grid max-w-[1280px] gap-6 px-6 py-8 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
+          {!cliente && (
+            <div className="flex items-center justify-between border border-line bg-white px-5 py-3">
+              <span className="text-sm text-ink-2">
+                Você está logado. Preencha seus dados abaixo ou{" "}
+                <Link href="/minha-conta" className="text-brand-500 underline hover:text-brand-400">
+                  complete seu perfil
+                </Link>
+                .
+              </span>
+              <Link
+                href="/minha-conta"
+                className="ml-4 shrink-0 font-mono text-[11px] uppercase tracking-mono text-ink-2 hover:text-ink"
+              >
+                Minha conta →
+              </Link>
+            </div>
+          )}
+
           <section className="border border-line bg-white p-6">
             <h2 className="mb-4 font-mono text-[11px] font-bold uppercase tracking-mono text-ink">
               SEUS DADOS

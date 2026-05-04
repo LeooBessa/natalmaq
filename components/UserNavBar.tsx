@@ -12,20 +12,25 @@ export function UserNavBar() {
     const sb = createSupabaseBrowserClient();
 
     async function carregar() {
-      const {
-        data: { user },
-      } = await sb.auth.getUser();
-      if (!user) {
+      try {
+        const {
+          data: { user },
+        } = await sb.auth.getUser();
+        if (!user) {
+          setCarregando(false);
+          return;
+        }
+        const { data } = await sb
+          .from("clientes")
+          .select("nome")
+          .eq("id", user.id)
+          .maybeSingle();
+        setNome(data?.nome ?? user.email ?? "Minha conta");
+      } catch {
+        // falha silenciosa — mostra "Entrar"
+      } finally {
         setCarregando(false);
-        return;
       }
-      const { data } = await sb
-        .from("clientes")
-        .select("nome")
-        .eq("id", user.id)
-        .maybeSingle();
-      setNome(data?.nome ?? user.email ?? "Minha conta");
-      setCarregando(false);
     }
 
     carregar();
