@@ -38,6 +38,7 @@ class PedidoIn(BaseModel):
     frete_valor: float = Field(ge=0)
     cupom_codigo: str | None = None
     desconto_valor: float = Field(default=0, ge=0)
+    cliente_id: str | None = None
 
 
 class FreteIn(BaseModel):

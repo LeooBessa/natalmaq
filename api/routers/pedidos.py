@@ -139,6 +139,7 @@ async def criar_pedido(payload: PedidoIn) -> PedidoCriado:
             "cupom_codigo": cupom_codigo_validado,
             "total": total,
             "observacoes": payload.observacoes,
+            **({"cliente_id": payload.cliente_id} if payload.cliente_id else {}),
         })
         .execute()
     )
