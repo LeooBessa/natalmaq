@@ -25,57 +25,37 @@ export default async function HomePage() {
       {/* HERO ─────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-navy text-white">
         <div className="absolute inset-0 bg-hatch-orange" />
-        <div className="relative mx-auto max-w-[1280px] px-6 py-16 md:py-20 md:px-10">
-          <div className="mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-mono text-brand-400">
+        <div className="relative mx-auto flex max-w-[1280px] flex-col items-center px-6 py-20 text-center md:py-28">
+          <div className="mb-6 flex items-center gap-3 font-mono text-[11px] uppercase tracking-mono text-brand-400">
             <span className="block h-px w-8 bg-brand-500" />
             EDIÇÃO 2026 · CATÁLOGO INDUSTRIAL
+            <span className="block h-px w-8 bg-brand-500" />
           </div>
-          <h1 className="font-display text-[42px] leading-[0.95] tracking-tight md:text-[64px] lg:text-[72px]">
+          <h1 className="font-display text-[42px] leading-[0.95] tracking-tight md:text-[64px] lg:text-[76px]">
             FERRAMENTAS
             <br />
             QUE <span className="text-brand-500">NÃO PARAM</span>
             <br />
             A SUA OBRA.
           </h1>
-          <p className="mt-6 max-w-[560px] text-[15px] leading-relaxed text-white/70">
+          <p className="mt-8 max-w-[560px] text-[15px] leading-relaxed text-white/70">
             Mais de 1.600 SKUs em estoque. Marcas profissionais, atendimento
             técnico e orçamento em até 2 horas para construtoras, indústrias e
             prestadores de serviço.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
               href="/catalogo"
-              className="bg-brand-500 px-7 py-4 text-sm font-extrabold uppercase tracking-wide text-white hover:bg-brand-400"
+              className="bg-brand-500 px-8 py-4 text-sm font-extrabold uppercase tracking-wide text-white hover:bg-brand-400"
             >
               Explorar catálogo →
             </Link>
             <Link
               href="/carrinho"
-              className="border border-white/40 px-7 py-4 text-sm text-white hover:bg-white/10"
+              className="border border-white/40 px-8 py-4 text-sm text-white hover:bg-white/10"
             >
               Solicitar orçamento em volume
             </Link>
-          </div>
-
-          <div className="mt-12 grid grid-cols-2 gap-0 border-t border-white/15 pt-6 md:grid-cols-4">
-            {[
-              ["1.670+", "SKUs ATIVOS"],
-              ["18 ANOS", "NO MERCADO"],
-              ["2H", "COTAÇÃO MÉDIA"],
-              ["98%", "ENTREGA NO PRAZO"],
-            ].map(([n, l], i) => (
-              <div
-                key={l}
-                className={i < 3 ? "border-r border-white/15 pr-4" : "pr-4"}
-              >
-                <div className="font-display text-[26px] tracking-tight text-brand-400">
-                  {n}
-                </div>
-                <div className="mt-1 font-mono text-[10px] uppercase tracking-mono text-white/60">
-                  {l}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
