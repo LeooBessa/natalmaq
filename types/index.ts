@@ -90,6 +90,15 @@ export type Cupom = {
 
 export type CupomHome = Pick<Cupom, "id" | "codigo" | "descricao" | "tipo" | "valor">;
 
+export type Cliente = {
+  id: string;
+  nome: string;
+  contato: string;
+  email: string;
+  endereco: Endereco | null;
+  criado_em: string;
+};
+
 export type PedidoInput = {
   cliente_nome: string;
   cliente_telefone: string;
@@ -100,6 +109,7 @@ export type PedidoInput = {
   frete_valor: number;
   cupom_codigo?: string;
   desconto_valor?: number;
+  cliente_id?: string;
 };
 
 export type PedidoCriado = {
