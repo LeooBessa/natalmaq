@@ -83,10 +83,24 @@ type PdfTextItem = { str: string; transform: number[] };
 type PdfImg = { width: number; height: number; kind: number; data: Uint8Array };
 
 // ─── Função principal ────────────────────────────────────────
+/**
+ * Extrai produtos + imagens do PDF.
+ *
+ * Aceita `pageRange` para processar só um chunk de páginas (uso em
+ * Vercel Hobby plan, onde o timeout de 60s não dá pra processar PDFs
+ * grandes em uma só chamada).
+ *
+ * Quando `pageRange` é parcial (não cobre todo o doc), retorna sem
+ * computar a janela de páginas adjacentes — caller deve chamar
+ * `computeAdjacency` ao final, depois de mergear todos os chunks.
+ */
 export async function extractSupplierCatalog(
   buffer: Buffer,
-  opts?: { onProgress?: (page: number, total: number) => void },
-): Promise<CatalogoExtraido> {
+  opts?: {
+    onProgress?: (page: number, total: number) => void;
+    pageRange?: { start: number; end: number };
+  },
+): Promise<CatalogoExtraido & { isFullDoc: boolean }> {
   const pdfjs = await loadPdfjs();
   const OPS = pdfjs.OPS;
   const doc = await pdfjs.getDocument({
@@ -94,11 +108,15 @@ export async function extractSupplierCatalog(
     useSystemFonts: true,
   }).promise;
 
+  const pageStart = opts?.pageRange?.start ?? 1;
+  const pageEnd = Math.min(opts?.pageRange?.end ?? doc.numPages, doc.numPages);
+  const isFullDoc = pageStart === 1 && pageEnd === doc.numPages;
+
   const imageRegistry = new Map<string, ImagemExtraida>();
   const pageImagensProduto = new Map<number, string[]>();
   const pageProdutos = new Map<number, ProdutoExtraido[]>();
 
-  for (let p = 1; p <= doc.numPages; p++) {
+  for (let p = pageStart; p <= pageEnd; p++) {
     opts?.onProgress?.(p, doc.numPages);
     const page = await doc.getPage(p);
     const text = await page.getTextContent();

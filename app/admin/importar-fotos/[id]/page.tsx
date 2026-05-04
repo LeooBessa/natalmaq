@@ -7,12 +7,14 @@ import { ReviewBoard } from "./ReviewBoard";
 export const dynamic = "force-dynamic";
 
 type ImagemMeta = {
-  url: string;
+  path?: string;
+  url?: string;
   w: number;
   h: number;
   tipo: string;
   score: number;
 };
+type ImagemMetaUI = ImagemMeta & { url: string };
 type ProdutoMeta = {
   page: number;
   tipo: string;
@@ -79,6 +81,30 @@ export default async function ReviewPage({
     .order("nome")
     .limit(2000);
 
+  // Gera signed URLs para o bucket privado fotos-import (TTL 1h)
+  // Compatível com registros antigos que guardaram url pública em vez de path
+  const imagensUI: Record<string, ImagemMetaUI> = {};
+  const entradas = Object.entries(dados.imagens);
+  const pathPorHash = new Map<string, string>();
+  for (const [hash, meta] of entradas) {
+    const p =
+      meta.path ??
+      meta.url?.split("/object/public/fotos-import/")?.[1];
+    if (p) pathPorHash.set(hash, p);
+  }
+  if (pathPorHash.size > 0) {
+    const { data: signed } = await sb.storage
+      .from("fotos-import")
+      .createSignedUrls([...pathPorHash.values()], 3600);
+    const urlPorPath = new Map(
+      (signed ?? []).filter((s) => s.signedUrl).map((s) => [s.path, s.signedUrl!]),
+    );
+    for (const [hash, p] of pathPorHash) {
+      const signedUrl = urlPorPath.get(p);
+      if (signedUrl) imagensUI[hash] = { ...dados.imagens[hash], url: signedUrl };
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -108,7 +134,7 @@ export default async function ReviewPage({
       <ReviewBoard
         importId={imp.id}
         produtosPdf={dados.produtos}
-        imagens={dados.imagens}
+        imagens={imagensUI}
         produtosBanco={produtosDaMarca ?? []}
       />
     </div>

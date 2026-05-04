@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { api } from "@/lib/api-client";
 import { formatBRL } from "@/lib/format";
@@ -17,11 +18,19 @@ type Item = {
 };
 
 export function SearchAutocomplete() {
+  const router = useRouter();
   const [q, setQ] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  function buscar() {
+    const termo = q.trim();
+    if (!termo) return;
+    setOpen(false);
+    router.push(`/catalogo?q=${encodeURIComponent(termo)}`);
+  }
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -61,12 +70,14 @@ export function SearchAutocomplete() {
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
+            onKeyDown={(e) => e.key === "Enter" && buscar()}
             placeholder="Buscar por código, marca ou produto..."
             className="w-full bg-transparent py-2.5 text-sm text-ink outline-none placeholder:text-ink-2"
           />
         </div>
         <button
           type="button"
+          onClick={buscar}
           className="bg-brand-500 px-5 font-extrabold uppercase tracking-wide text-white text-[13px] hover:bg-brand-400"
         >
           Buscar

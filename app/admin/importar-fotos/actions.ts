@@ -84,7 +84,7 @@ export async function processarImportFotosAction(
   const imagensMeta: Record<
     string,
     {
-      url: string;
+      path: string;
       w: number;
       h: number;
       tipo: string;
@@ -105,9 +105,8 @@ export async function processarImportFotosAction(
             upsert: true,
           });
         if (errUp) return;
-        const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
         imagensMeta[img.hash] = {
-          url: pub.publicUrl,
+          path,
           w: img.w,
           h: img.h,
           tipo: img.tipo,

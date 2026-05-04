@@ -8,7 +8,7 @@ const PRODUTOS_BUCKET = "produtos";
 
 export type AplicarItem = {
   produto_id: string;
-  imagem_url: string;
+  imagem_hash: string;
   descricao: string | null;
 };
 
@@ -19,9 +19,10 @@ export type AplicarResult = {
 
 /**
  * Para cada item:
- *  1. Baixa a imagem do bucket fotos-import (signed URL pública)
- *  2. Faz upload para o bucket produtos/{produto_id}/{hash}.png
- *  3. UPDATE produtos SET imagens = [novaUrl, ...] (prepend), descricao = ?
+ *  1. Resolve o path da imagem a partir do import (bucket privado)
+ *  2. Baixa via SDK do bucket fotos-import
+ *  3. Faz upload para o bucket produtos/{produto_id}/{hash}.png
+ *  4. UPDATE produtos SET imagens = [novaUrl, ...] (prepend), descricao = ?
  */
 export async function aplicarFotosSelecionadasAction(
   importId: string,
@@ -31,21 +32,39 @@ export async function aplicarFotosSelecionadasAction(
   const erros: AplicarResult["erros"] = [];
   let aplicados = 0;
 
+  // Carrega dados do import para resolver hash → path
+  const { data: imp } = await sb
+    .from("imports_fotos")
+    .select("dados")
+    .eq("id", importId)
+    .maybeSingle();
+  const imagensDados: Record<string, { path?: string; url?: string }> =
+    (imp?.dados as { imagens?: Record<string, { path?: string; url?: string }> })
+      ?.imagens ?? {};
+
   for (const item of itens) {
     try {
-      // 1) Baixa imagem do bucket público
-      const res = await fetch(item.imagem_url);
-      if (!res.ok) {
-        erros.push({
-          modelo: item.produto_id,
-          motivo: `download HTTP ${res.status}`,
-        });
+      const imgMeta = imagensDados[item.imagem_hash];
+      const imgPath =
+        imgMeta?.path ??
+        imgMeta?.url?.split("/object/public/fotos-import/")?.[1];
+      if (!imgPath) {
+        erros.push({ modelo: item.produto_id, motivo: "imagem não encontrada no import" });
         continue;
       }
-      const buf = Buffer.from(await res.arrayBuffer());
+
+      // 1) Baixa do bucket privado via SDK (sem depender de URL pública)
+      const { data: imgData, error: errDl } = await sb.storage
+        .from("fotos-import")
+        .download(imgPath);
+      if (errDl || !imgData) {
+        erros.push({ modelo: item.produto_id, motivo: errDl?.message ?? "download falhou" });
+        continue;
+      }
+      const buf = Buffer.from(await imgData.arrayBuffer());
 
       // 2) Sobe pro bucket produtos
-      const fname = item.imagem_url.split("/").pop() ?? `${Date.now()}.png`;
+      const fname = `${item.imagem_hash}.png`;
       const path = `${item.produto_id}/${Date.now()}-${fname}`;
       const { error: errUp } = await sb.storage
         .from(PRODUTOS_BUCKET)

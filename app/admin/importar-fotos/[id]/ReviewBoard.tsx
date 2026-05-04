@@ -103,7 +103,7 @@ export function ReviewBoard({
         const prod = produtosPdf[Number(idx)];
         return {
           produto_id: s.produto_id!,
-          imagem_url: imagens[s.imagem_hash!]?.url,
+          imagem_hash: s.imagem_hash!,
           descricao: s.aplicar_descricao ? prod.descricao : null,
         };
       });
@@ -171,7 +171,6 @@ export function ReviewBoard({
         {filtrados.map(({ p, i }) => (
           <ProdutoRow
             key={i}
-            idx={i}
             prod={p}
             imagens={imagens}
             produtosBanco={produtosBanco}
@@ -187,14 +186,12 @@ export function ReviewBoard({
 }
 
 function ProdutoRow({
-  idx,
   prod,
   imagens,
   produtosBanco,
   sel,
   setSel,
 }: {
-  idx: number;
   prod: ProdutoPdf;
   imagens: Record<string, ImagemMeta>;
   produtosBanco: ProdutoBanco[];
