@@ -6,6 +6,7 @@ import Link from "next/link";
 import { NavStrip } from "@/components/NavStrip";
 import { SearchAutocomplete } from "@/components/catalog/SearchAutocomplete";
 import { UserNav } from "@/components/UserNav";
+import { UserNavBar } from "@/components/UserNavBar";
 import { useCart } from "@/lib/cart-store";
 import type { Categoria, Marca } from "@/types";
 
@@ -53,6 +54,8 @@ export function Header({ categorias, marcas }: Props) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* Entrar / Minha conta — visível em todos os tamanhos */}
+            <UserNavBar />
             <Link
               href="/carrinho"
               className="group inline-flex items-center gap-3 bg-navy px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-navy-800"
