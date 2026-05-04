@@ -43,7 +43,7 @@ export function UserNavBar() {
     return (
       <Link
         href="/minha-conta"
-        className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-mono text-ink hover:text-brand-500"
+        className="inline-flex items-center gap-2 border border-line bg-white px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-mono text-ink hover:border-navy hover:text-navy"
         title={nome}
       >
         <span className="inline-block h-2 w-2 rounded-full bg-ok" />
@@ -55,7 +55,7 @@ export function UserNavBar() {
   return (
     <Link
       href="/auth"
-      className="font-mono text-[11px] font-bold uppercase tracking-mono text-ink hover:text-brand-500"
+      className="inline-flex items-center border border-navy bg-white px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-mono text-navy hover:bg-navy hover:text-white"
     >
       Entrar
     </Link>

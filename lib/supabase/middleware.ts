@@ -37,8 +37,11 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAdminRoute = path.startsWith("/admin") && path !== "/admin/login";
-  const isLoginRoute = path === "/admin/login";
+  const isAdminLogin = path === "/admin/login";
+  const isClientProtected =
+    path === "/checkout" || path.startsWith("/minha-conta");
 
+  // Admin: redireciona para /admin/login se não autenticado
   if (isAdminRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
@@ -46,10 +49,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (isLoginRoute && user) {
+  if (isAdminLogin && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/dashboard";
     url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  // Público protegido: redireciona para /auth se não autenticado
+  if (isClientProtected && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth";
+    url.searchParams.set("next", path);
     return NextResponse.redirect(url);
   }
 
