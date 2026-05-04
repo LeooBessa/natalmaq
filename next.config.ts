@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
-  typedRoutes: true,
+  typedRoutes: false,
   experimental: {
     // PDFs do Delphi (importação de planilha) chegam em ~1.5MB.
     // PDFs de fornecedor (importar-fotos) sobem direto pro Storage,
