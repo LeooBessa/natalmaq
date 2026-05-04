@@ -60,8 +60,8 @@ export function Header({ categorias, marcas }: Props) {
               href="/carrinho"
               className="group inline-flex items-center gap-3 bg-navy px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-navy-800"
             >
-              <span className="hidden md:inline">Orçamento</span>
-              <span className="md:hidden">Cesta</span>
+              <span className="hidden md:inline">Meu Carrinho</span>
+              <span className="md:hidden">Carrinho</span>
               <span className="inline-flex min-w-[28px] items-center justify-center bg-brand-500 px-2 py-0.5 font-mono text-xs">
                 {total}
               </span>

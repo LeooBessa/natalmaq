@@ -8,7 +8,12 @@ import type {
   ProdutoComMarca,
 } from "@/types";
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+// No browser: relative URLs (same origin, no CORS).
+// On the server (SSR): needs absolute URL.
+const baseUrl =
+  typeof window !== "undefined"
+    ? ""
+    : (process.env.NEXT_PUBLIC_SITE_URL ?? "");
 
 async function request<T>(
   path: string,
