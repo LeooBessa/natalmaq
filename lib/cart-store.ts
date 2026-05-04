@@ -4,12 +4,21 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartItem } from "@/types";
 
+type CupomAplicado = {
+  codigo: string;
+  descricao: string | null;
+  desconto: number;
+};
+
 type CartState = {
   itens: CartItem[];
+  cupom: CupomAplicado | null;
   addItem: (item: CartItem) => void;
   removeItem: (produto_id: string) => void;
   setQuantidade: (produto_id: string, quantidade: number) => void;
   clear: () => void;
+  aplicarCupom: (cupom: CupomAplicado) => void;
+  removerCupom: () => void;
   totalItens: () => number;
   subtotal: () => number;
   pesoTotal: () => number;
@@ -19,6 +28,7 @@ export const useCart = create<CartState>()(
   persist(
     (set, get) => ({
       itens: [],
+      cupom: null,
       addItem: (item) => {
         const itens = [...get().itens];
         const idx = itens.findIndex((i) => i.produto_id === item.produto_id);
@@ -48,7 +58,9 @@ export const useCart = create<CartState>()(
           ),
         });
       },
-      clear: () => set({ itens: [] }),
+      clear: () => set({ itens: [], cupom: null }),
+      aplicarCupom: (cupom) => set({ cupom }),
+      removerCupom: () => set({ cupom: null }),
       totalItens: () => get().itens.reduce((s, i) => s + i.quantidade, 0),
       subtotal: () =>
         get().itens.reduce((s, i) => s + i.preco_unit * i.quantidade, 0),
@@ -57,7 +69,6 @@ export const useCart = create<CartState>()(
     }),
     {
       name: "natalmaq-cart-v1",
-      // só persiste o array; funções são recriadas a cada hidratação
       partialize: (state) => ({ itens: state.itens }),
     },
   ),

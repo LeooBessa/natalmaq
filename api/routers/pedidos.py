@@ -20,7 +20,8 @@ def _format_brl(v: float) -> str:
 
 def _build_message(pedido_numero: int, cliente_nome: str, cliente_telefone: str,
                    endereco: dict, itens_detalhados: list[dict],
-                   subtotal: float, frete_valor: float, total: float,
+                   subtotal: float, desconto_valor: float, cupom_codigo: str | None,
+                   frete_valor: float, total: float,
                    observacoes: str | None) -> str:
     settings = get_settings()
     lines: list[str] = []
@@ -45,6 +46,9 @@ def _build_message(pedido_numero: int, cliente_nome: str, cliente_telefone: str,
         )
     lines.append("")
     lines.append(f"Subtotal: {_format_brl(subtotal)}")
+    if desconto_valor > 0:
+        label = f"Cupom ({cupom_codigo})" if cupom_codigo else "Desconto"
+        lines.append(f"{label}: -{_format_brl(desconto_valor)}")
     lines.append(f"Frete:    {_format_brl(frete_valor)}")
     lines.append(f"*TOTAL:   {_format_brl(total)}*")
     if observacoes:
@@ -95,7 +99,31 @@ async def criar_pedido(payload: PedidoIn) -> PedidoCriado:
         })
 
     subtotal = round(subtotal, 2)
-    total = round(subtotal + payload.frete_valor, 2)
+
+    # Valida e aplica cupom (autoridade no servidor)
+    desconto_valor = 0.0
+    cupom_codigo_validado: str | None = None
+    if payload.cupom_codigo:
+        res = (
+            sb.table("cupons")
+            .select("codigo, tipo, valor, valor_minimo, usos_max, usos_atual, validade")
+            .eq("codigo", payload.cupom_codigo.upper().strip())
+            .eq("ativo", True)
+            .maybe_single()
+            .execute()
+        )
+        c = res.data
+        from datetime import datetime, timezone
+        if c and (not c["validade"] or datetime.fromisoformat(c["validade"]) > datetime.now(timezone.utc)):
+            if c["usos_max"] is None or c["usos_atual"] < c["usos_max"]:
+                if subtotal >= float(c["valor_minimo"]):
+                    if c["tipo"] == "percentual":
+                        desconto_valor = round(subtotal * float(c["valor"]) / 100, 2)
+                    else:
+                        desconto_valor = min(float(c["valor"]), subtotal)
+                    cupom_codigo_validado = c["codigo"]
+
+    total = round(subtotal - desconto_valor + payload.frete_valor, 2)
 
     # 2) Cria o pedido
     novo = (
@@ -107,6 +135,8 @@ async def criar_pedido(payload: PedidoIn) -> PedidoCriado:
             "endereco": payload.endereco.model_dump(),
             "subtotal": subtotal,
             "frete_valor": payload.frete_valor,
+            "desconto_valor": desconto_valor,
+            "cupom_codigo": cupom_codigo_validado,
             "total": total,
             "observacoes": payload.observacoes,
         })
@@ -121,6 +151,12 @@ async def criar_pedido(payload: PedidoIn) -> PedidoCriado:
         {**i, "pedido_id": pedido_id} for i in itens_detalhados
     ]).execute()
 
+    # 3b) Incrementa usos do cupom
+    if cupom_codigo_validado and c:
+        sb.table("cupons").update({"usos_atual": int(c["usos_atual"]) + 1}).eq(
+            "codigo", cupom_codigo_validado
+        ).execute()
+
     # 4) Monta mensagem WhatsApp
     msg = _build_message(
         pedido_numero=pedido_numero,
@@ -129,6 +165,8 @@ async def criar_pedido(payload: PedidoIn) -> PedidoCriado:
         endereco=payload.endereco.model_dump(),
         itens_detalhados=itens_detalhados,
         subtotal=subtotal,
+        desconto_valor=desconto_valor,
+        cupom_codigo=cupom_codigo_validado,
         frete_valor=payload.frete_valor,
         total=total,
         observacoes=payload.observacoes,

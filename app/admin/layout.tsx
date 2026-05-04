@@ -47,6 +47,7 @@ export default async function AdminLayout({
           <NavLink href="/admin/marcas">Marcas</NavLink>
           <NavLink href="/admin/categorias">Categorias</NavLink>
           <NavLink href="/admin/banners">Banners</NavLink>
+          <NavLink href="/admin/cupons">Cupons</NavLink>
           <hr className="my-2 border-zinc-200" />
           <NavLink href="/admin/importar">Importar planilha</NavLink>
           <NavLink href="/admin/importar-fotos">Importar fotos PDF</NavLink>

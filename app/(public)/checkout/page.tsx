@@ -1,17 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 import { api } from "@/lib/api-client";
 import { useCart } from "@/lib/cart-store";
 import { formatBRL, formatCEP, formatPhone, onlyDigits } from "@/lib/format";
 import type { FreteCalculado } from "@/types";
+import { validarCupomAction } from "./actions";
 
 export default function CheckoutPage() {
-  const router = useRouter();
-  const { itens, subtotal, pesoTotal, clear } = useCart();
+  const { itens, subtotal, pesoTotal, clear, cupom, aplicarCupom, removerCupom } = useCart();
 
   const [form, setForm] = useState({
     cliente_nome: "",
@@ -30,6 +29,10 @@ export default function CheckoutPage() {
   const [calcLoading, setCalcLoading] = useState(false);
   const [submit, setSubmit] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  const [cupomInput, setCupomInput] = useState("");
+  const [cupomErro, setCupomErro] = useState<string | null>(null);
+  const [cupomPending, startCupomTransition] = useTransition();
 
   if (itens.length === 0) {
     return (
@@ -75,6 +78,21 @@ export default function CheckoutPage() {
     }
   }
 
+  function aplicarCupomHandler() {
+    setCupomErro(null);
+    const codigo = cupomInput.trim().toUpperCase();
+    if (!codigo) return;
+    startCupomTransition(async () => {
+      const res = await validarCupomAction(codigo, subtotal());
+      if (res.ok) {
+        aplicarCupom({ codigo: res.codigo, descricao: res.descricao, desconto: res.desconto });
+        setCupomInput("");
+      } else {
+        setCupomErro(res.erro);
+      }
+    });
+  }
+
   async function finalizar() {
     setErro(null);
     if (!form.cliente_nome || !form.cliente_telefone) {
@@ -111,9 +129,10 @@ export default function CheckoutPage() {
           quantidade: i.quantidade,
         })),
         frete_valor: frete.valor,
+        cupom_codigo: cupom?.codigo,
+        desconto_valor: cupom?.desconto,
       });
 
-      // limpa e abre WhatsApp
       clear();
       window.location.href = pedido.whatsapp_url;
     } catch (e) {
@@ -122,7 +141,8 @@ export default function CheckoutPage() {
     }
   }
 
-  const total = subtotal() + (frete?.valor ?? 0);
+  const desconto = cupom?.desconto ?? 0;
+  const total = subtotal() - desconto + (frete?.valor ?? 0);
 
   return (
     <div className="bg-bone">
@@ -196,47 +216,26 @@ export default function CheckoutPage() {
                 </div>
               </Field>
               <Field label="Rua *" className="md:col-span-2">
-                <input
-                  value={form.rua}
-                  onChange={(e) => update("rua", e.target.value)}
-                  className={inputCls}
-                />
+                <input value={form.rua} onChange={(e) => update("rua", e.target.value)} placeholder="Nome da rua" className={inputCls} />
               </Field>
               <Field label="Número *">
-                <input
-                  value={form.numero}
-                  onChange={(e) => update("numero", e.target.value)}
-                  className={inputCls}
-                />
+                <input value={form.numero} onChange={(e) => update("numero", e.target.value)} placeholder="Nº" className={inputCls} />
               </Field>
               <Field label="Bairro *">
-                <input
-                  value={form.bairro}
-                  onChange={(e) => update("bairro", e.target.value)}
-                  className={inputCls}
-                />
+                <input value={form.bairro} onChange={(e) => update("bairro", e.target.value)} placeholder="Bairro" className={inputCls} />
               </Field>
               <Field label="Complemento">
-                <input
-                  value={form.complemento}
-                  onChange={(e) => update("complemento", e.target.value)}
-                  className={inputCls}
-                />
+                <input value={form.complemento} onChange={(e) => update("complemento", e.target.value)} placeholder="Apto, bloco..." className={inputCls} />
               </Field>
               <Field label="Cidade *" className="md:col-span-2">
-                <input
-                  value={form.cidade}
-                  onChange={(e) => update("cidade", e.target.value)}
-                  className={inputCls}
-                />
+                <input value={form.cidade} onChange={(e) => update("cidade", e.target.value)} placeholder="Cidade" className={inputCls} />
               </Field>
               <Field label="UF *">
                 <input
                   value={form.uf}
                   maxLength={2}
-                  onChange={(e) =>
-                    update("uf", e.target.value.toUpperCase().slice(0, 2))
-                  }
+                  onChange={(e) => update("uf", e.target.value.toUpperCase().slice(0, 2))}
+                  placeholder="RN"
                   className={inputCls}
                 />
               </Field>
@@ -273,22 +272,66 @@ export default function CheckoutPage() {
               </li>
             ))}
           </ul>
+
           <Row label="Subtotal" value={formatBRL(subtotal())} />
+
+          {/* Cupom aplicado */}
+          {cupom ? (
+            <div className="flex items-center justify-between rounded border border-ok/40 bg-ok/10 px-3 py-2 text-sm">
+              <div>
+                <span className="font-mono font-bold text-ok">{cupom.codigo}</span>
+                {cupom.descricao && (
+                  <span className="ml-2 text-white/60 text-xs">{cupom.descricao}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-ok">−{formatBRL(cupom.desconto)}</span>
+                <button
+                  type="button"
+                  onClick={removerCupom}
+                  className="text-white/40 hover:text-white text-xs"
+                  title="Remover cupom"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-mono text-white/50 mb-1">
+                CUPOM DE DESCONTO
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={cupomInput}
+                  onChange={(e) => { setCupomInput(e.target.value.toUpperCase()); setCupomErro(null); }}
+                  onKeyDown={(e) => e.key === "Enter" && aplicarCupomHandler()}
+                  placeholder="CÓDIGO"
+                  className="flex-1 border border-white/20 bg-white/10 px-3 py-2 font-mono text-[12px] uppercase text-white placeholder:text-white/30 outline-none focus:border-brand-400"
+                />
+                <button
+                  type="button"
+                  onClick={aplicarCupomHandler}
+                  disabled={cupomPending || !cupomInput.trim()}
+                  className="bg-brand-500 px-4 font-mono text-[11px] font-bold uppercase tracking-mono text-white hover:bg-brand-400 disabled:opacity-40"
+                >
+                  {cupomPending ? "..." : "Aplicar"}
+                </button>
+              </div>
+              {cupomErro && (
+                <p className="mt-1 text-[11px] text-brand-400">{cupomErro}</p>
+              )}
+            </div>
+          )}
+
           <Row
             label="Frete"
-            value={
-              frete
-                ? `${formatBRL(frete.valor)} · ${frete.prazo_dias} dia(s)`
-                : "—"
-            }
+            value={frete ? `${formatBRL(frete.valor)} · ${frete.prazo_dias} dia(s)` : "—"}
           />
+
           <div className="mt-2 flex items-end justify-between border-t border-white/15 pt-3">
-            <div className="font-mono text-[11px] uppercase tracking-mono text-white/70">
-              TOTAL
-            </div>
-            <div className="font-display text-[26px] tracking-tight">
-              {formatBRL(total)}
-            </div>
+            <div className="font-mono text-[11px] uppercase tracking-mono text-white/70">TOTAL</div>
+            <div className="font-display text-[26px] tracking-tight">{formatBRL(total)}</div>
           </div>
 
           {erro && (
@@ -298,6 +341,7 @@ export default function CheckoutPage() {
           )}
 
           <button
+            type="button"
             onClick={finalizar}
             disabled={submit || !frete}
             className="block w-full bg-brand-500 py-4 font-mono text-[12px] font-bold uppercase tracking-mono text-white transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-40"

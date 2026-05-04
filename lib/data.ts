@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import type {
   Banner,
   Categoria,
+  CupomHome,
   Marca,
   ProdutoComMarca,
 } from "@/types";
@@ -173,4 +174,15 @@ export async function listBanners(): Promise<Banner[]> {
     .eq("ativo", true)
     .order("ordem");
   return (data as Banner[]) ?? [];
+}
+
+export async function listCuponsHome(): Promise<CupomHome[]> {
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from("cupons")
+    .select("id, codigo, descricao, tipo, valor")
+    .eq("ativo", true)
+    .eq("exibir_home", true)
+    .or("validade.is.null,validade.gt." + new Date().toISOString());
+  return (data as CupomHome[]) ?? [];
 }

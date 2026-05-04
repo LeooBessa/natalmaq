@@ -1,13 +1,15 @@
 import Link from "next/link";
 
 import { BannerCarousel } from "@/components/home/BannerCarousel";
+import { CuponsStrip } from "@/components/home/CuponsStrip";
 import { ProductCard } from "@/components/catalog/ProductCard";
-import { listBanners, listCategorias, listMarcas, listProdutos } from "@/lib/data";
+import { listBanners, listCategorias, listCuponsHome, listMarcas, listProdutos } from "@/lib/data";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [banners, destaques, categorias, marcas] = await Promise.all([
+  const [cuponsHome, banners, destaques, categorias, marcas] = await Promise.all([
+    listCuponsHome(),
     listBanners(),
     listProdutos({ page: 1 }),
     listCategorias(),
@@ -19,6 +21,9 @@ export default async function HomePage() {
 
   return (
     <div>
+      {/* CUPONS STRIP ────────────────────────────────────── */}
+      <CuponsStrip cupons={cuponsHome} />
+
       {/* BANNERS ─────────────────────────────────────────── */}
       <BannerCarousel banners={banners} />
 

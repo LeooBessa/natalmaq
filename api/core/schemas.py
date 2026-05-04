@@ -36,6 +36,8 @@ class PedidoIn(BaseModel):
     observacoes: str | None = Field(default=None, max_length=2000)
     itens: list[ItemPedidoIn] = Field(min_length=1, max_length=100)
     frete_valor: float = Field(ge=0)
+    cupom_codigo: str | None = None
+    desconto_valor: float = Field(default=0, ge=0)
 
 
 class FreteIn(BaseModel):

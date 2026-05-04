@@ -73,6 +73,23 @@ export type FreteCalculado = {
   regiao: string;
 };
 
+export type Cupom = {
+  id: string;
+  codigo: string;
+  descricao: string | null;
+  tipo: "percentual" | "fixo";
+  valor: number;
+  valor_minimo: number;
+  usos_max: number | null;
+  usos_atual: number;
+  ativo: boolean;
+  exibir_home: boolean;
+  validade: string | null;
+  created_at: string;
+};
+
+export type CupomHome = Pick<Cupom, "id" | "codigo" | "descricao" | "tipo" | "valor">;
+
 export type PedidoInput = {
   cliente_nome: string;
   cliente_telefone: string;
@@ -81,6 +98,8 @@ export type PedidoInput = {
   observacoes?: string;
   itens: { produto_id: string; quantidade: number }[];
   frete_valor: number;
+  cupom_codigo?: string;
+  desconto_valor?: number;
 };
 
 export type PedidoCriado = {
