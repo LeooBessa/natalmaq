@@ -27,3 +27,56 @@ export async function updateStatusAction(
   revalidatePath("/admin/dashboard");
   return { ok: true };
 }
+
+export async function editarPedidoAction(
+  pedidoId: string,
+  data: {
+    desconto: number;
+    frete_valor: number;
+    forma_pagamento: string;
+    itens: { id: string; disponivel: boolean }[];
+  },
+): Promise<{ ok: boolean; error?: string }> {
+  const sb = await createSupabaseServerClient();
+
+  // Atualiza disponibilidade de cada item
+  for (const item of data.itens) {
+    const { error } = await sb
+      .from("pedido_itens")
+      .update({ disponivel: item.disponivel })
+      .eq("id", item.id);
+    if (error) return { ok: false, error: error.message };
+  }
+
+  // Recalcula subtotal com base nos itens disponíveis
+  const { data: itens, error: itensErr } = await sb
+    .from("pedido_itens")
+    .select("preco_total, disponivel")
+    .eq("pedido_id", pedidoId);
+
+  if (itensErr) return { ok: false, error: itensErr.message };
+
+  const subtotal = (itens ?? [])
+    .filter((i) => i.disponivel)
+    .reduce((sum, i) => sum + Number(i.preco_total), 0);
+
+  const total = Math.max(0, subtotal - data.desconto + data.frete_valor);
+
+  const { error } = await sb
+    .from("pedidos")
+    .update({
+      desconto: data.desconto,
+      frete_valor: data.frete_valor,
+      subtotal,
+      total,
+      forma_pagamento: data.forma_pagamento || null,
+    })
+    .eq("id", pedidoId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin/pedidos");
+  revalidatePath(`/admin/pedidos/${pedidoId}`);
+  revalidatePath("/admin/dashboard");
+  return { ok: true };
+}

@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
 import type { Cupom } from "@/types";
-import { toggleCupomAction, deletarCupomAction } from "./actions";
+import { toggleCupomAction } from "./actions";
+import { BotaoDeletar } from "./BotaoDeletar";
 
 export const dynamic = "force-dynamic";
 
@@ -103,22 +104,7 @@ export default async function CuponsPage() {
                       >
                         Editar
                       </Link>
-                      <form
-                        action={async () => {
-                          "use server";
-                          await deletarCupomAction(c.id);
-                        }}
-                      >
-                        <button
-                          type="submit"
-                          className="text-xs text-red-500 hover:underline"
-                          onClick={(e) => {
-                            if (!confirm("Excluir este cupom?")) e.preventDefault();
-                          }}
-                        >
-                          Excluir
-                        </button>
-                      </form>
+                      <BotaoDeletar id={c.id} />
                     </div>
                   </td>
                 </tr>
