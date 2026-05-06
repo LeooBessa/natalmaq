@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 export function Footer() {
   return (
@@ -15,11 +14,11 @@ export function Footer() {
               className="h-12 w-auto"
             />
             <p className="mt-4 leading-relaxed">
-              Av. Industrial Norte, 2.480 — Galpão 04
+              R. Pres. Sarmento, 545 — Alecrim
               <br />
-              Distrito Industrial · Natal/RN
+              Natal/RN · CEP 59037-400
               <br />
-              CEP 59.115-080 · CNPJ 09.493.387/0001-30
+              CNPJ 09.493.387/0001-30
             </p>
           </div>
           <FooterCol
@@ -46,7 +45,7 @@ export function Footer() {
             items={[
               { label: "(84) 3000-0000", href: "/" },
               { label: "WhatsApp comercial", href: "/" },
-              { label: "vendas@natalmaq.com.br", href: "/" },
+              { label: "natalmaq@hotmail.com", href: "/" },
               { label: "Seg–Sex 7h–18h · Sáb 7h–12h", href: "/" },
             ]}
           />
@@ -76,12 +75,9 @@ function FooterCol({
       <ul className="space-y-2">
         {items.map((it) => (
           <li key={it.label}>
-            <Link
-              href={it.href as never}
-              className="transition hover:text-white"
-            >
+            <span className="cursor-default text-white/40">
               {it.label}
-            </Link>
+            </span>
           </li>
         ))}
       </ul>

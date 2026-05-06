@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import {
   Camera,
@@ -30,6 +31,10 @@ const KEYFRAMES = `
   @keyframes bob {
     0%, 100% { transform: translateY(0); }
     50%       { transform: translateY(7px); }
+  }
+  @keyframes rotateBorder {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
   }
 `;
 
@@ -392,7 +397,7 @@ export default function InstitucionalContent() {
                       ))}
                     </ul>
                     <div className="mt-auto pt-5">
-                      <span className="font-mono text-[11px] uppercase tracking-mono text-brand-500 transition-colors group-hover:text-brand-600">
+                      <span className="cursor-default font-mono text-[11px] uppercase tracking-mono text-brand-500/40">
                         Saiba mais →
                       </span>
                     </div>
@@ -418,21 +423,52 @@ export default function InstitucionalContent() {
             </Reveal>
 
             <div className="mt-10 grid auto-rows-[240px] grid-cols-2 gap-3 md:grid-cols-3">
+              {/* Imagem principal — slot grande com borda girando */}
               <Reveal className="col-span-2 row-span-2 h-full md:col-span-1 md:row-span-2">
-                <Photo
-                  className="h-full w-full"
-                  label="Galpão principal"
-                  gradient="bg-gradient-to-t from-navy/80 via-navy/20 to-transparent"
-                />
+                <div className="relative h-full w-full overflow-hidden" style={{ padding: "3px" }}>
+                  {/* borda girando */}
+                  <div
+                    className="absolute left-1/2 top-1/2 aspect-square w-[210%] pointer-events-none"
+                    style={{
+                      background: "conic-gradient(transparent 0deg, transparent 250deg, #E8682A 280deg, #FF7A33 300deg, #E8682A 320deg, transparent 350deg)",
+                      animation: "rotateBorder 4s linear infinite",
+                    }}
+                  />
+                  {/* imagem */}
+                  <div className="absolute inset-[3px] overflow-hidden">
+                    <Image
+                      src="/brand/Imagens%20NatalMaq/7e35b865-78c2-4330-b0bb-20f8ef17b170.jpg"
+                      alt="Natalmaq - Estrutura principal"
+                      fill
+                      className="object-cover transition-transform duration-500 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-navy/50 to-transparent" />
+                  </div>
+                </div>
               </Reveal>
+              {/* Imagens secundárias */}
               {[
-                { label: "Estoque",      gradient: "bg-gradient-to-t from-navy/70 to-transparent", delay: 80  },
-                { label: "Atendimento",  gradient: "bg-gradient-to-t from-navy/70 to-transparent", delay: 130 },
-                { label: "Equipe",       gradient: "bg-gradient-to-t from-navy/70 to-transparent", delay: 180 },
-                { label: "Entrega",      gradient: "bg-gradient-to-t from-navy/70 to-transparent", delay: 230 },
+                { src: "/brand/Imagens%20NatalMaq/91f40451-bf76-426c-80cd-70b81b7276fd.jpg", alt: "Natalmaq - Estoque",     delay: 80  },
+                { src: "/brand/Imagens%20NatalMaq/b22ed44d-1b5e-485e-b562-ce1c7c168f83.jpg", alt: "Natalmaq - Atendimento", delay: 130 },
+                { src: "/brand/Imagens%20NatalMaq/cf15fae7-6b02-49e9-b835-f7f34426d64b.jpg", alt: "Natalmaq - Equipe",      delay: 180 },
+                { src: "/brand/Imagens%20NatalMaq/WhatsApp%20Image%202026-05-05%20at%2020.57.42.jpeg", alt: "Natalmaq - Entrega", delay: 230 },
               ].map((item) => (
-                <Reveal key={item.label} delay={item.delay} className="h-full">
-                  <Photo className="h-full w-full" label={item.label} gradient={item.gradient} />
+                <Reveal key={item.alt} delay={item.delay} className="h-full">
+                  <div className="relative h-full w-full overflow-hidden">
+                    {item.src ? (
+                      <>
+                        <Image
+                          src={item.src}
+                          alt={item.alt}
+                          fill
+                          className="object-cover transition-transform duration-500 hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-navy/60 to-transparent" />
+                      </>
+                    ) : (
+                      <Photo className="h-full w-full" label="Em breve" gradient="bg-gradient-to-t from-navy/70 to-transparent" />
+                    )}
+                  </div>
                 </Reveal>
               ))}
             </div>
@@ -457,13 +493,13 @@ export default function InstitucionalContent() {
                   {
                     Icon: MapPin,
                     label: "Endereço",
-                    content: "Av. Industrial Norte, 2.480 · Distrito Industrial · Natal/RN · CEP 59.115-080",
+                    content: "R. Pres. Sarmento, 545 - Alecrim, Natal - RN, 59037-400",
                     delay: 0,
                   },
                   {
                     Icon: Phone,
                     label: "Telefone / WhatsApp",
-                    content: "(84) 3000-0000",
+                    content: "(84) 98129-5219",
                     delay: 80,
                   },
                   {
@@ -475,7 +511,7 @@ export default function InstitucionalContent() {
                   {
                     Icon: Clock,
                     label: "Horário de Atendimento",
-                    content: "Seg–Sex: 7h às 18h · Sáb: 7h às 12h",
+                    content: "Seg–Sex: 07:30–17:00 · Sáb: 07:30–12:00 · Dom: Fechado",
                     delay: 200,
                   },
                 ].map(({ Icon, label, content, delay }) => (
@@ -494,7 +530,7 @@ export default function InstitucionalContent() {
 
                 <Reveal delay={260}>
                   <a
-                    href={`https://wa.me/${process.env.NEXT_PUBLIC_LOJA_WHATSAPP ?? "5584999999999"}`}
+                    href="https://wa.me/5584981295219"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex w-full items-center justify-center gap-2 bg-brand-500 py-4 font-mono text-[11px] uppercase tracking-mono text-white transition-all hover:gap-3 hover:brightness-110"
@@ -509,7 +545,7 @@ export default function InstitucionalContent() {
                 <div className="overflow-hidden rounded-sm border border-white/10 h-full min-h-[420px]">
                   <iframe
                     title="Localização Natalmaq"
-                    src="https://maps.google.com/maps?q=Av.+Industrial+Norte,+2480,+Natal,+RN,+Brasil&output=embed&hl=pt-BR&z=15"
+                    src="https://maps.google.com/maps?q=R.+Pres.+Sarmento,+545,+Alecrim,+Natal,+RN,+59037-400,+Brasil&output=embed&hl=pt-BR&z=16"
                     width="100%"
                     height="100%"
                     style={{ minHeight: "420px", border: 0, filter: "grayscale(20%) contrast(1.05)" }}
