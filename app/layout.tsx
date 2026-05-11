@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   },
   description:
     "Catálogo industrial completo. Orçamentos rápidos via WhatsApp e entrega em todo o RN. Mais de 1.600 SKUs em estoque.",
+  icons: {
+    icon: "/brand/natalmaq-mark.png",
+    apple: "/brand/natalmaq-mark.png",
+  },
 };
 
 export const viewport: Viewport = {

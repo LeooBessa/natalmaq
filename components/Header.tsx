@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { NavStrip } from "@/components/NavStrip";
 import { SearchAutocomplete } from "@/components/catalog/SearchAutocomplete";
-import { UserNav } from "@/components/UserNav";
 import { UserNavBar } from "@/components/UserNavBar";
 import { useCart } from "@/lib/cart-store";
 import type { Categoria, Marca } from "@/types";
@@ -30,7 +29,6 @@ export function Header({ categorias, marcas }: Props) {
           <div className="flex items-center gap-5">
             <span>(84) 3000-0000</span>
             <span>VENDAS@NATALMAQ.COM.BR</span>
-            <UserNav />
           </div>
         </div>
       </div>

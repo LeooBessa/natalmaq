@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import {
   Camera,
   Check,
@@ -11,7 +13,6 @@ import {
   Headphones,
   Mail,
   MapPin,
-  Package,
   Phone,
   Star,
   Target,
@@ -204,7 +205,7 @@ export default function InstitucionalContent() {
               style={{ animation: "fadeUp 0.7s ease 1.05s both" }}
             >
               Ferramentas, máquinas e EPIs para construtoras, indústrias e
-              prestadores de serviço — com estoque real e entrega no prazo.
+              prestadores de serviço.
             </p>
             <div
               className="mt-12 inline-flex flex-col items-center gap-2"
@@ -237,14 +238,13 @@ export default function InstitucionalContent() {
               <Reveal delay={80}>
                 <div className="space-y-4 text-[15px] leading-relaxed text-ink-2">
                   <p>
-                    Fundada em 2008 por uma família de eletricistas, a Natalmaq nasceu na zona
-                    industrial de Natal/RN como uma pequena loja de ferragens. O sonho era
-                    simples: atender bem o profissional que não tem tempo a perder.
+                    Fundada em 2008 por profissionais do setor, 
+                    a Natalmaq nasceu em Natal/RN com uma proposta clara: ser um fornecedor confiável 
+                    para quem vive da produtividade no canteiro e na linha de produção.
                   </p>
                   <p>
-                    Hoje, com galpão próprio de 2.400 m², frota de entrega própria e parcerias
-                    diretas com mais de 18 fabricantes, atendemos construtoras, indústrias
-                    metalmecânicas e prestadores de serviço em todo o Nordeste.
+                    Ao longo de quase duas décadas, crescemos de forma consistente. Hoje operamos em um galpão próprio de 2.400 m², com frota de entrega e parcerias diretas com mais de 18 fabricantes nacionais e internacionais, atendendo construtoras, indústrias metalmecânicas e prestadores de serviço em todo o Nordeste.
+
                   </p>
                 </div>
 
@@ -287,13 +287,12 @@ export default function InstitucionalContent() {
                   </h3>
                   <div className="mt-6 space-y-3">
                     {[
-                      "Estoque real com +1.670 SKUs sempre disponíveis",
-                      "Preço profissional por CNPJ com descontos progressivos",
+                      "Estoque real com +10.000 itens",
+                      "Condições especiais para CNPJ",
                       "Entrega própria com 98% de pontualidade no Nordeste",
                       "Pós-venda e assistência técnica autorizada",
                       "Equipe especializada com mais de 15 anos no mercado",
                       "Importação direta dos principais fabricantes",
-                      "Atualização de catálogo integrada ao ERP em tempo real",
                     ].map((item) => (
                       <div
                         key={item}
@@ -313,14 +312,12 @@ export default function InstitucionalContent() {
         {/* ── STATS ────────────────────────────────────────────── */}
         <section className="bg-navy">
           <div className="mx-auto max-w-[1280px] px-6 py-16">
-            <div className="grid grid-cols-2 gap-px bg-white/[0.06] md:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-px bg-white/[0.06] md:grid-cols-4">
               {[
-                { end: 2008, label: "FUNDAÇÃO",         suffix: "" },
-                { end: 2400, label: "M² DE GALPÃO",     suffix: "+" },
-                { end: 18,   label: "MARCAS PARCEIRAS", suffix: "+" },
-                { end: 1670, label: "SKUs",              suffix: "+" },
-                { end: 4200, label: "CLIENTES B2B",      suffix: "+" },
-                { end: 98,   label: "ENTREGA NO PRAZO", suffix: "%" },
+                { end: 2400,  label: "M² DE GALPÃO",     suffix: "+" },
+                { end: 18,    label: "MARCAS PARCEIRAS", suffix: "+" },
+                { end: 10000, label: "SKUs",              suffix: "+" },
+                { end: 4200,  label: "CLIENTES B2B",      suffix: "+" },
               ].map((s) => (
                 <div key={s.label} className="bg-navy px-6 py-8">
                   <div className="font-display text-[34px] leading-none text-brand-500">
@@ -345,40 +342,32 @@ export default function InstitucionalContent() {
                 <span className="text-brand-500">a sua operação.</span>
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-ink-2">
-                Do estoque à assistência técnica, a Natalmaq cobre cada etapa
-                para que você nunca pare a obra por falta de ferramenta.
+                Da fundação ao acabamento, a Natalmaq fornece os materiais certos para que sua obra avance sem interrupções e dentro do prazo.
               </p>
             </Reveal>
 
-            <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
               {[
-                {
-                  Icon: Package,
-                  title: "Estoque Real",
-                  desc: "Mais de 1.670 SKUs disponíveis, atualizados diretamente pelo ERP — sem falsas promessas.",
-                  items: ["1.670+ produtos", "Atualização automática", "Disponibilidade garantida"],
-                  delay: 0,
-                },
                 {
                   Icon: TrendingUp,
                   title: "Preço Profissional",
-                  desc: "Cotação por CNPJ com desconto progressivo por volume e tabela exclusiva de fidelidade.",
-                  items: ["Cotação por CNPJ", "Desconto por volume", "Tabela de fidelidade"],
-                  delay: 80,
+                  desc: "Condições especiais para construtoras, empreiteiras e autônomos com CNPJ.",
+                  items: ["Cotação por CNPJ", "Desconto por volume de compra", "Programa de fidelidade para clientes recorrentes"],
+                  delay: 0,
                 },
                 {
                   Icon: Truck,
-                  title: "Entrega Rápida",
-                  desc: "Frota própria de entrega com rastreamento e 98% de pontualidade em todo o Nordeste.",
-                  items: ["Frota própria", "Rastreamento em tempo real", "98% no prazo"],
-                  delay: 160,
+                  title: "Entrega na Obra",
+                  desc: "Frota própria com rastreamento e pontualidade comprovada para levar o pedido direto ao canteiro.",
+                  items: ["Entrega direta no canteiro", "Rastreamento em tempo real", "98% de pontualidade comprovada"],
+                  delay: 80,
                 },
                 {
                   Icon: Headphones,
-                  title: "Pós-Venda Sério",
-                  desc: "Assistência autorizada das principais marcas e suporte técnico via WhatsApp.",
-                  items: ["Assistência autorizada", "Suporte via WhatsApp", "Garantia real"],
-                  delay: 240,
+                  title: "Atendimento Especializado",
+                  desc: "Equipe técnica preparada para orientar a compra certa e garantir suporte no pós-venda.",
+                  items: ["Consultoria técnica na compra", "Atendimento via WhatsApp", "Garantia assegurada"],
+                  delay: 160,
                 },
               ].map(({ Icon, title, desc, items, delay }) => (
                 <Reveal key={title} delay={delay}>
@@ -396,16 +385,29 @@ export default function InstitucionalContent() {
                         </li>
                       ))}
                     </ul>
-                    <div className="mt-auto pt-5">
-                      <span className="cursor-default font-mono text-[11px] uppercase tracking-mono text-brand-500/40">
-                        Saiba mais →
-                      </span>
-                    </div>
                   </div>
                 </Reveal>
               ))}
             </div>
           </div>
+        </section>
+
+        {/* ── CTA CATÁLOGO ─────────────────────────────────────── */}
+        <section className="bg-bone py-20">
+          <Reveal className="flex flex-col items-center gap-6 text-center">
+            <p className="font-mono text-[11px] uppercase tracking-mono text-ink-2">
+              +10.000 itens disponíveis · entrega em todo o RN
+            </p>
+            <Link
+              href="/catalogo"
+              className="inline-flex items-center gap-4 bg-brand-500 px-12 py-5 font-display text-[22px] tracking-tight text-white shadow-lg transition-all duration-300 hover:gap-6 hover:brightness-110 hover:shadow-brand-500/30 hover:shadow-xl"
+            >
+              Confira nosso catálogo →
+            </Link>
+            <p className="text-[13px] text-ink-2">
+              Orçamento rápido via WhatsApp
+            </p>
+          </Reveal>
         </section>
 
         {/* ── GALERIA ──────────────────────────────────────────── */}
@@ -560,6 +562,7 @@ export default function InstitucionalContent() {
         </section>
 
       </div>
+      <WhatsAppFloat />
     </>
   );
 }
