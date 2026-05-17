@@ -16,7 +16,7 @@ export default function RecuperarSenhaPage() {
     const email = String(fd.get("email") ?? "").trim();
     startTransition(async () => {
       const sb = createSupabaseBrowserClient();
-      const redirectTo = `${location.origin}/auth/callback?next=/auth/nova-senha`;
+      const redirectTo = `${location.origin}/auth/callback`;
       const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) setErro("Erro ao enviar e-mail. Tente novamente.");
       else setEnviado(true);
