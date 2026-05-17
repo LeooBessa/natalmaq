@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export function Footer() {
   return (
@@ -24,11 +25,11 @@ export function Footer() {
           <FooterCol
             title="Catálogo"
             items={[
-              { label: "Máquinas Elétricas", href: "/catalogo" },
-              { label: "Ferramentas Manuais", href: "/catalogo" },
-              { label: "EPI e Segurança", href: "/catalogo" },
-              { label: "Solda e Corte", href: "/catalogo" },
-              { label: "Medição", href: "/catalogo" },
+              { label: "Máquinas Elétricas", href: "/catalogo?categoria=maquinas-eletricas" },
+              { label: "Ferramentas Manuais", href: "/catalogo?categoria=ferramentas-manuais" },
+              { label: "EPI e Segurança", href: "/catalogo?categoria=epi-seguranca" },
+              { label: "Solda e Corte", href: "/catalogo?categoria=solda-corte" },
+              { label: "Medição", href: "/catalogo?categoria=medicao" },
             ]}
           />
           <FooterCol
@@ -40,15 +41,40 @@ export function Footer() {
               { label: "Privacidade", href: "/institucional" },
             ]}
           />
-          <FooterCol
-            title="Atendimento"
-            items={[
-              { label: "(84) 3000-0000", href: "/" },
-              { label: "WhatsApp comercial", href: "/" },
-              { label: "natalmaq@hotmail.com", href: "/" },
-              { label: "Seg–Sex 7h–18h · Sáb 7h–12h", href: "/" },
-            ]}
-          />
+          <div>
+            <div className="mb-4 font-mono text-[11px] uppercase tracking-mono text-white">
+              Atendimento
+            </div>
+            <ul className="space-y-2">
+              <li>
+                <a
+                  href="tel:+558430000000"
+                  className="transition hover:text-white"
+                >
+                  (84) 3000-0000
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/5584981295219"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition hover:text-white"
+                >
+                  WhatsApp comercial
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:vendas@natalmaq.com.br"
+                  className="transition hover:text-white"
+                >
+                  vendas@natalmaq.com.br
+                </a>
+              </li>
+              <li className="text-white/40">Seg–Sex 7h–18h · Sáb 7h–12h</li>
+            </ul>
+          </div>
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-white/10 pt-5 font-mono text-[11px] uppercase tracking-mono md:flex-row">
@@ -75,9 +101,12 @@ function FooterCol({
       <ul className="space-y-2">
         {items.map((it) => (
           <li key={it.label}>
-            <span className="cursor-default text-white/40">
+            <Link
+              href={it.href as never}
+              className="transition hover:text-white"
+            >
               {it.label}
-            </span>
+            </Link>
           </li>
         ))}
       </ul>

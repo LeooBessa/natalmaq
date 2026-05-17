@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ProductCard } from "@/components/catalog/ProductCard";
+import { MobileFilterDrawer } from "@/components/catalog/MobileFilterDrawer";
 import { listCategorias, listMarcas, listProdutos } from "@/lib/data";
 
 export const revalidate = 60;
@@ -164,23 +165,20 @@ export default async function CatalogoPage({
 
         {/* Listing */}
         <div className="p-6">
-          {/* Mobile filter chips */}
-          <div className="mb-4 flex flex-wrap gap-2 md:hidden">
-            <Link
-              href="/catalogo"
-              className={`border px-3 py-1.5 text-xs ${!sp.categoria ? "border-navy bg-navy text-white" : "border-line bg-white text-ink"}`}
-            >
-              Todas
-            </Link>
-            {categorias.slice(0, 6).map((c) => (
-              <Link
-                key={c.id}
-                href={`/catalogo?categoria=${c.slug}`}
-                className={`border px-3 py-1.5 text-xs ${sp.categoria === c.slug ? "border-navy bg-navy text-white" : "border-line bg-white text-ink"}`}
-              >
-                {c.nome}
-              </Link>
-            ))}
+          {/* Mobile filter drawer trigger */}
+          <div className="mb-4 md:hidden">
+            <MobileFilterDrawer
+              categorias={categorias}
+              marcas={marcas}
+              sp={sp}
+              totalAtivos={
+                (sp.categoria ? 1 : 0) +
+                (sp.marca ? 1 : 0) +
+                (sp.promocao ? 1 : 0) +
+                (sp.estoque ? 1 : 0) +
+                (sp.q ? 1 : 0)
+              }
+            />
           </div>
 
           {produtos.items.length === 0 ? (
@@ -201,33 +199,67 @@ export default async function CatalogoPage({
           )}
 
           {/* Pagination */}
-          {produtos.total > produtos.items.length && (
-            <div className="mt-8 flex items-center justify-center gap-1 font-mono">
-              {page > 1 && (
-                <Link
-                  href={{
-                    pathname: "/catalogo",
-                    query: { ...sp, page: page - 1 },
-                  }}
-                  className="border border-line bg-white px-4 py-2 text-sm text-ink hover:bg-bone"
-                >
-                  ← Anterior
-                </Link>
-              )}
-              <span className="border border-line bg-navy px-4 py-2 text-sm text-white">
-                {page}
-              </span>
-              <Link
-                href={{
-                  pathname: "/catalogo",
-                  query: { ...sp, page: page + 1 },
-                }}
-                className="border border-line bg-white px-4 py-2 text-sm text-ink hover:bg-bone"
-              >
-                Próxima →
-              </Link>
-            </div>
-          )}
+          {(() => {
+            const PAGE_SIZE = 24;
+            const totalPaginas = Math.ceil(produtos.total / PAGE_SIZE);
+            if (totalPaginas <= 1) return null;
+
+            const paginas: number[] = [];
+            for (let i = 1; i <= totalPaginas; i++) {
+              if (i === 1 || i === totalPaginas || Math.abs(i - page) <= 1) {
+                paginas.push(i);
+              }
+            }
+
+            const comEllipsis: (number | "...")[] = [];
+            let prev: number | null = null;
+            for (const p of paginas) {
+              if (prev !== null && p - prev > 1) comEllipsis.push("...");
+              comEllipsis.push(p);
+              prev = p;
+            }
+
+            return (
+              <div className="mt-8 flex items-center justify-center gap-1 font-mono text-sm">
+                {page > 1 && (
+                  <Link
+                    href={{ pathname: "/catalogo", query: { ...sp, page: page - 1 } }}
+                    className="border border-line bg-white px-3 py-2 text-ink hover:bg-bone"
+                  >
+                    ←
+                  </Link>
+                )}
+                {comEllipsis.map((item, i) =>
+                  item === "..." ? (
+                    <span key={`e-${i}`} className="px-2 py-2 text-ink-2">…</span>
+                  ) : (
+                    <Link
+                      key={item}
+                      href={{ pathname: "/catalogo", query: { ...sp, page: item } }}
+                      className={`border px-3 py-2 ${
+                        item === page
+                          ? "border-navy bg-navy text-white"
+                          : "border-line bg-white text-ink hover:bg-bone"
+                      }`}
+                    >
+                      {item}
+                    </Link>
+                  )
+                )}
+                {page < totalPaginas && (
+                  <Link
+                    href={{ pathname: "/catalogo", query: { ...sp, page: page + 1 } }}
+                    className="border border-line bg-white px-3 py-2 text-ink hover:bg-bone"
+                  >
+                    →
+                  </Link>
+                )}
+                <span className="ml-3 text-[11px] uppercase tracking-mono text-ink-2">
+                  Pág. {page} de {totalPaginas}
+                </span>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

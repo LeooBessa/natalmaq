@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { useCart } from "@/lib/cart-store";
@@ -38,12 +39,12 @@ export function ProductCard({ produto }: { produto: ProdutoComMarca }) {
         className="relative block aspect-square overflow-hidden border-b border-line bg-bone"
       >
         {img ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={img}
             alt={produto.nome}
-            className="h-full w-full object-contain p-3 transition group-hover:scale-[1.03]"
-            loading="lazy"
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            className="object-contain p-3 transition group-hover:scale-[1.03]"
           />
         ) : (
           <div

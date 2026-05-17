@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { ProdutoComVariantes } from "@/components/produto/ProdutoComVariantes";
+import { ProdutoGallery } from "@/components/produto/ProdutoGallery";
 import { getProdutoBySlug } from "@/lib/data";
 
 export const revalidate = 60;
@@ -15,8 +16,6 @@ export default async function ProdutoPage({
   const { slug } = await params;
   const produto = await getProdutoBySlug(slug);
   if (!produto) notFound();
-
-  const img = produto.imagens?.[0];
 
   return (
     <div className="bg-bone">
@@ -49,29 +48,11 @@ export default async function ProdutoPage({
       <div className="mx-auto grid max-w-[1280px] gap-8 px-6 py-10 md:grid-cols-[1.1fr_1fr]">
         {/* Gallery */}
         <div>
-          <div className="relative aspect-square overflow-hidden border border-line bg-white">
-            {img ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={img}
-                alt={produto.nome}
-                className="h-full w-full object-contain p-6"
-              />
-            ) : (
-              <div
-                className="flex h-full w-full items-center justify-center font-mono text-[11px] uppercase tracking-mono text-ink-2/50"
-                style={{
-                  backgroundImage:
-                    "repeating-linear-gradient(135deg, rgba(15,31,61,0.04) 0 1px, transparent 1px 12px)",
-                }}
-              >
-                [ sem foto ]
-              </div>
-            )}
-            <div className="absolute left-4 top-4 border border-line bg-white px-2 py-1 font-mono text-[11px] uppercase tracking-mono text-ink">
-              {produto.codigo}
-            </div>
-          </div>
+          <ProdutoGallery
+            imagens={produto.imagens ?? []}
+            nome={produto.nome}
+            codigo={produto.codigo}
+          />
         </div>
 
         {/* Info — variantes + preço + CTA */}

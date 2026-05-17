@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { BannerCarousel } from "@/components/home/BannerCarousel";
@@ -8,15 +9,17 @@ import { listBanners, listCategorias, listCuponsHome, listMarcas, listProdutos }
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [cuponsHome, banners, destaques, categorias, marcas] = await Promise.all([
+  const [cuponsHome, banners, destaques, todosProdutos, categorias, marcas] = await Promise.all([
     listCuponsHome(),
     listBanners(),
+    listProdutos({ destaque: true, page: 1 }),
     listProdutos({ page: 1 }),
     listCategorias(),
     listMarcas(),
   ]);
 
-  const destaquesItems = destaques.items.slice(0, 8);
+  // Prefere produtos com flag destaque=true; fallback nos primeiros do catálogo
+  const destaquesItems = (destaques.total > 0 ? destaques.items : todosProdutos.items).slice(0, 8);
   const catTop = categorias.slice(0, 8);
 
   return (
@@ -56,7 +59,7 @@ export default async function HomePage() {
               Explorar catálogo →
             </Link>
             <Link
-              href="/carrinho"
+              href="/catalogo"
               className="border border-white/40 px-8 py-4 text-sm text-white hover:bg-white/10"
             >
               Solicitar orçamento em volume
@@ -154,14 +157,29 @@ export default async function HomePage() {
             <div className="mb-6 font-mono text-[11px] uppercase tracking-mono text-ink-2">
               03 · MARCAS PARCEIRAS
             </div>
-            <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-              {marcas.slice(0, 12).map((m) => (
+            <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+              {marcas.slice(0, 16).map((m) => (
                 <Link
                   key={m.id}
                   href={`/marca/${m.slug}`}
-                  className="font-display text-[20px] tracking-tight text-ink-2 transition hover:text-ink"
+                  className="group flex h-16 items-center justify-center border border-line bg-white px-3 transition hover:border-navy hover:shadow-sm"
+                  title={m.nome}
                 >
-                  {m.nome.toUpperCase()}
+                  {m.logo_url ? (
+                    <div className="relative h-10 w-full">
+                      <Image
+                        src={m.logo_url}
+                        alt={m.nome}
+                        fill
+                        sizes="120px"
+                        className="object-contain grayscale transition group-hover:grayscale-0"
+                      />
+                    </div>
+                  ) : (
+                    <span className="font-display text-[13px] tracking-tight text-ink-2 transition group-hover:text-ink">
+                      {m.nome.toUpperCase()}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
@@ -176,14 +194,14 @@ export default async function HomePage() {
             [
               "ORÇAMENTO B2B",
               "Cadastre seu CNPJ e receba condições especiais para volume.",
-              "Solicitar orçamento →",
-              "/carrinho",
+              "Explorar catálogo →",
+              "/catalogo",
             ],
             [
               "ENTREGA EM TODO RN",
               "Frota própria com saída diária para Natal e região metropolitana.",
-              "Calcular frete →",
-              "/checkout",
+              "Falar no WhatsApp →",
+              "https://wa.me/5584981295219",
             ],
             [
               "ASSISTÊNCIA TÉCNICA",
