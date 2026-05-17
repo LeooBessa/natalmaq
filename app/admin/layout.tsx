@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { logoutAction } from "./login/actions";
 
 export const dynamic = "force-dynamic";
@@ -40,18 +41,7 @@ export default async function AdminLayout({
           <p className="text-xs text-zinc-500">Painel administrativo</p>
         </div>
 
-        <nav className="flex flex-col gap-1 p-3 text-sm">
-          <NavLink href="/admin/dashboard">Dashboard</NavLink>
-          <NavLink href="/admin/pedidos">Pedidos</NavLink>
-          <NavLink href="/admin/produtos">Produtos</NavLink>
-          <NavLink href="/admin/marcas">Marcas</NavLink>
-          <NavLink href="/admin/categorias">Categorias</NavLink>
-          <NavLink href="/admin/banners">Banners</NavLink>
-          <NavLink href="/admin/cupons">Cupons</NavLink>
-          <hr className="my-2 border-zinc-200" />
-          <NavLink href="/admin/importar">Importar planilha</NavLink>
-          <NavLink href="/admin/importar-fotos">Importar fotos PDF</NavLink>
-        </nav>
+        <AdminNav />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -80,19 +70,3 @@ export default async function AdminLayout({
   );
 }
 
-function NavLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href as never}
-      className="rounded-md px-3 py-2 text-zinc-700 transition hover:bg-zinc-100 hover:text-brand-600"
-    >
-      {children}
-    </Link>
-  );
-}

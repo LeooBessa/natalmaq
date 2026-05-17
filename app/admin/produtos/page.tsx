@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
@@ -22,7 +23,7 @@ export default async function ProdutosPage({
 
   let query = sb
     .from("produtos")
-    .select("id, codigo, slug, nome, preco, preco_promocional, estoque, ativo, destaque, marca:marcas(nome)", { count: "exact" });
+    .select("id, codigo, slug, nome, preco, preco_promocional, estoque, ativo, destaque, imagens, marca:marcas(nome)", { count: "exact" });
 
   if (sp.q) query = query.or(`nome.ilike.%${sp.q}%,codigo.ilike.%${sp.q}%`);
 
@@ -40,6 +41,7 @@ export default async function ProdutosPage({
     estoque: number;
     ativo: boolean;
     destaque: boolean;
+    imagens: string[] | null;
     marca: { nome: string } | null;
   }>;
 
@@ -86,6 +88,7 @@ export default async function ProdutosPage({
               <th className="px-5 py-2">Marca</th>
               <th className="px-5 py-2 text-right">Preço</th>
               <th className="px-5 py-2 text-right">Estoque</th>
+              <th className="px-5 py-2">Foto</th>
               <th className="px-5 py-2">Status</th>
               <th></th>
             </tr>
@@ -107,9 +110,27 @@ export default async function ProdutosPage({
                   <td className="px-5 py-2 text-zinc-500">{p.marca?.nome ?? "—"}</td>
                   <td className="px-5 py-2 text-right">{formatBRL(Number(preco))}</td>
                   <td className="px-5 py-2 text-right">
-                    <span className={p.estoque <= 0 ? "text-red-600 font-semibold" : ""}>
+                    <span className={`inline-flex items-center gap-1 ${
+                      p.estoque <= 0
+                        ? "font-bold text-red-600"
+                        : p.estoque <= 3
+                          ? "font-semibold text-orange-600"
+                          : ""
+                    }`}>
+                      {(p.estoque <= 3 && p.estoque > 0) && (
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                      )}
                       {p.estoque}
                     </span>
+                  </td>
+                  <td className="px-5 py-2">
+                    {p.imagens && p.imagens.length > 0 ? (
+                      <span className="text-xs text-zinc-400">✓</span>
+                    ) : (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                        sem foto
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-2 space-x-1">
                     {p.ativo ? (

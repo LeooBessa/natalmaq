@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
@@ -136,7 +137,7 @@ export default async function PedidosPage({
               <th className="px-5 py-2">#</th>
               <th className="px-5 py-2">Cliente</th>
               <th className="px-5 py-2">Telefone</th>
-              <th className="px-5 py-2">Total</th>
+              <th className="px-5 py-2 text-right">Total</th>
               <th className="px-5 py-2">Status</th>
               <th className="px-5 py-2">Quando</th>
               <th className="px-5 py-2"></th>
@@ -154,8 +155,23 @@ export default async function PedidosPage({
                   </Link>
                 </td>
                 <td className="px-5 py-2">{p.cliente_nome}</td>
-                <td className="px-5 py-2">{p.cliente_telefone}</td>
-                <td className="px-5 py-2">{formatBRL(Number(p.total))}</td>
+                <td className="px-5 py-2">
+                  <div className="flex items-center gap-2">
+                    <span>{p.cliente_telefone}</span>
+                    {p.cliente_telefone && (
+                      <a
+                        href={`https://wa.me/55${p.cliente_telefone.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Contato WhatsApp"
+                        className="text-green-600 hover:text-green-700"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
+                </td>
+                <td className="px-5 py-2 text-right font-medium">{formatBRL(Number(p.total))}</td>
                 <td className="px-5 py-2"><StatusBadge status={p.status} /></td>
                 <td className="px-5 py-2 text-zinc-500">
                   {new Date(p.criado_em).toLocaleString("pt-BR")}
