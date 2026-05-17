@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { recuperarSenhaAction } from "../actions";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function RecuperarSenhaPage() {
   const [pending, startTransition] = useTransition();
@@ -13,10 +13,13 @@ export default function RecuperarSenhaPage() {
     e.preventDefault();
     setErro(null);
     const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("email") ?? "").trim();
     startTransition(async () => {
-      const r = await recuperarSenhaAction(fd);
-      if (r.ok) setEnviado(true);
-      else setErro(r.error ?? "Erro ao enviar e-mail.");
+      const sb = createSupabaseBrowserClient();
+      const redirectTo = `${location.origin}/auth/callback?next=/auth/nova-senha`;
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) setErro("Erro ao enviar e-mail. Tente novamente.");
+      else setEnviado(true);
     });
   }
 
