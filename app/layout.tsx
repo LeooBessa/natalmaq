@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo_Black, Inter, JetBrains_Mono } from "next/font/google";
 
 import "./globals.css";
+import { AuthHashHandler } from "@/components/auth/AuthHashHandler";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const archivoBlack = Archivo_Black({
@@ -44,6 +45,7 @@ export default function RootLayout({
       className={`${inter.variable} ${archivoBlack.variable} ${jetbrains.variable}`}
     >
       <body className="min-h-screen bg-bone font-sans text-ink antialiased">
+        <AuthHashHandler />
         {children}
       </body>
     </html>
