@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -10,6 +10,29 @@ export default function NovaSenhaPage() {
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
+  const [pronto, setPronto] = useState(false);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) { setPronto(true); return; }
+
+    const params = new URLSearchParams(hash.slice(1));
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    const type = params.get("type");
+
+    if (type === "recovery" && access_token && refresh_token) {
+      const sb = createSupabaseBrowserClient();
+      sb.auth.setSession({ access_token, refresh_token }).then(() => {
+        window.history.replaceState(null, "", window.location.pathname);
+        setPronto(true);
+      });
+    } else {
+      setPronto(true);
+    }
+  }, []);
+
+  if (!pronto) return null;
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
