@@ -157,25 +157,26 @@ export default async function HomePage() {
             <div className="mb-6 font-mono text-[11px] uppercase tracking-mono text-ink-2">
               03 · MARCAS PARCEIRAS
             </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-              {marcas.slice(0, 20).map((m) => (
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+              {marcas.slice(0, 24).map((m) => (
                 <Link
                   key={m.id}
                   href={`/marca/${m.slug}`}
-                  className="group flex h-14 items-center justify-center px-4 transition"
+                  title={m.nome}
+                  className="group flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-line bg-white p-3 transition hover:-translate-y-0.5 hover:border-ink/20 hover:shadow-md"
                 >
                   {m.logo_url ? (
-                    <div className="relative h-8 w-24">
+                    <div className="relative h-full w-full">
                       <Image
                         src={m.logo_url}
                         alt={m.nome}
                         fill
-                        sizes="96px"
-                        className="object-contain grayscale opacity-50 transition group-hover:grayscale-0 group-hover:opacity-100"
+                        sizes="160px"
+                        className="object-contain transition group-hover:scale-105"
                       />
                     </div>
                   ) : (
-                    <span className="font-display text-[18px] tracking-tight text-ink-2/60 transition group-hover:text-ink">
+                    <span className="text-center font-display text-[15px] leading-tight tracking-tight text-ink-2">
                       {m.nome.toUpperCase()}
                     </span>
                   )}
