@@ -361,11 +361,19 @@ async function importarPdf(
   }
 
   // -------------------------------------------------------------- 2. produtos
-  // Pre-fetch produtos existentes (somente codigo + id).
-  const { data: existentes } = await sb.from("produtos").select("id, codigo");
-  const produtosExistentes = new Set<string>(
-    (existentes ?? []).map((p) => p.codigo),
-  );
+  // Pre-fetch produtos existentes (somente codigo). Paginado: o PostgREST
+  // devolve no máximo 1000 linhas por requisição — sem o loop, catálogos
+  // grandes ficariam quase todos marcados como "não existe".
+  const produtosExistentes = new Set<string>();
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await sb
+      .from("produtos")
+      .select("codigo")
+      .range(from, from + 999);
+    if (error || !data || data.length === 0) break;
+    for (const p of data) produtosExistentes.add(p.codigo);
+    if (data.length < 1000) break;
+  }
 
   // Separa rows em "atualizar existentes" e "criar novos".
   type UpdatePayload = {
