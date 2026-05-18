@@ -54,19 +54,38 @@ export type ImportResult = {
   importId?: string;
 };
 
-export async function importarPlanilhaAction(
-  _prev: unknown,
-  formData: FormData,
-): Promise<ImportResult> {
-  const file = formData.get("file");
-  if (!(file instanceof File)) return { ok: false, error: "Arquivo inválido" };
-  const criarNovos = formData.get("criar_novos") === "on";
-
-  const ext = file.name.toLowerCase().split(".").pop() ?? "";
-  if (ext === "pdf") {
-    return importarPdf(file, criarNovos);
+/**
+ * Recebe apenas o caminho do arquivo já enviado ao Storage (bucket `imports`).
+ * O upload é feito direto do navegador para o Supabase, evitando o limite de
+ * ~4,5 MB que a Vercel impõe ao corpo de Server Actions.
+ */
+export async function importarPlanilhaAction(input: {
+  storage_path: string;
+  filename: string;
+  criar_novos: boolean;
+}): Promise<ImportResult> {
+  const { storage_path, filename, criar_novos } = input;
+  if (!storage_path || !filename) {
+    return { ok: false, error: "Arquivo não enviado" };
   }
-  return importarPlanilha(file, criarNovos);
+
+  const sb = await createSupabaseServerClient();
+  const { data: blob, error: errDl } = await sb.storage
+    .from("imports")
+    .download(storage_path);
+  if (errDl || !blob) {
+    return {
+      ok: false,
+      error: "Falha ao baixar o arquivo do Storage: " + (errDl?.message ?? "desconhecido"),
+    };
+  }
+
+  const file = new File([blob], filename, { type: blob.type });
+  const ext = filename.toLowerCase().split(".").pop() ?? "";
+  if (ext === "pdf") {
+    return importarPdf(file, criar_novos);
+  }
+  return importarPlanilha(file, criar_novos);
 }
 
 // ============================================================================
