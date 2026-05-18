@@ -2,8 +2,10 @@ import Link from "next/link";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { RevisaoList, type Candidato } from "./RevisaoList";
+import { BuscaPanel } from "./BuscaPanel";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 export const metadata = { title: "Enriquecimento de fotos" };
 
 type SearchParams = Promise<{ page?: string }>;
@@ -20,7 +22,12 @@ export default async function EnriquecimentoPage({
 
   const sb = await createSupabaseServerClient();
 
-  const [{ data, count }, { count: aprovados }, { count: rejeitados }] = await Promise.all([
+  const [
+    { data, count },
+    { count: aprovados },
+    { count: rejeitados },
+    { count: semFoto },
+  ] = await Promise.all([
     sb
       .from("produto_enriquecimento")
       .select(
@@ -38,6 +45,10 @@ export default async function EnriquecimentoPage({
       .from("produto_enriquecimento")
       .select("id", { count: "exact", head: true })
       .eq("status", "rejeitado"),
+    sb
+      .from("produtos")
+      .select("id", { count: "exact", head: true })
+      .or("imagens.is.null,imagens.eq.[]"),
   ]);
 
   const itens = (data ?? []) as unknown as Candidato[];
@@ -49,10 +60,12 @@ export default async function EnriquecimentoPage({
       <div>
         <h1 className="text-2xl font-bold text-zinc-900">Enriquecimento de fotos</h1>
         <p className="text-sm text-zinc-500">
-          Candidatos de foto + descrição buscados no Mercado Livre. Aprovar aplica
-          a imagem ao produto; rejeitar descarta.
+          Busca foto + descrição no Mercado Livre para os produtos sem imagem.
+          Aprovar aplica a foto ao produto; rejeitar descarta.
         </p>
       </div>
+
+      <BuscaPanel totalSemFoto={semFoto ?? 0} />
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
@@ -71,7 +84,8 @@ export default async function EnriquecimentoPage({
 
       {pendentes === 0 ? (
         <p className="rounded-lg border border-zinc-200 bg-white px-5 py-12 text-center text-zinc-500">
-          Nenhum candidato pendente. Rode <code className="rounded bg-zinc-100 px-1">scripts/buscar-fotos-ml.mjs</code> para gerar candidatos.
+          Nenhum candidato pendente. Use o botão acima para buscar candidatos no
+          Mercado Livre.
         </p>
       ) : (
         <>

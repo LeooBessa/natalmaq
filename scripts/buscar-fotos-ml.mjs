@@ -1,31 +1,31 @@
 /**
- * Busca foto + título de produtos sem imagem na API do Mercado Livre e grava
- * candidatos em `produto_enriquecimento` para revisão no admin.
+ * Busca foto + título de produtos sem imagem na API de catálogo do Mercado
+ * Livre e grava candidatos em `produto_enriquecimento` para revisão no admin.
  *
  * Pré-requisitos:
  *  - migration 0010_enriquecimento.sql aplicada
- *  - access_token do Mercado Livre (use scripts/ml-token.mjs para obter)
+ *  - App do Mercado Livre criado (App ID + Secret) em developers.mercadolivre.com.br
  *
  * Uso:
- *   node --env-file=.env.local scripts/buscar-fotos-ml.mjs <ml-access-token> [--min-score=25] [--limite=N]
+ *   node --env-file=.env.local scripts/buscar-fotos-ml.mjs <APP_ID> <SECRET> [--min-score=25] [--limite=N]
  *
  *   --min-score=N   só grava candidatos com score >= N (padrão 25)
  *   --limite=N      processa no máximo N produtos (padrão: todos)
  *
- * É resumível: produtos que já têm candidato são pulados. Se o token expirar
- * (~6h), gere outro com ml-token.mjs e rode de novo — continua de onde parou.
+ * O token é obtido sozinho (client_credentials) e renovado se expirar.
+ * É resumível: produtos que já têm candidato são pulados.
  *
  * Lê do .env.local: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 
 import { createClient } from "@supabase/supabase-js";
 
-const [, , token, ...flags] = process.argv;
+const [, , appId, secret, ...flags] = process.argv;
 const minScore = Number((flags.find((f) => f.startsWith("--min-score=")) ?? "").split("=")[1]) || 25;
 const limite = Number((flags.find((f) => f.startsWith("--limite=")) ?? "").split("=")[1]) || Infinity;
 
-if (!token) {
-  console.error("Uso: node --env-file=.env.local scripts/buscar-fotos-ml.mjs <ml-access-token> [--min-score=25] [--limite=N]");
+if (!appId || !secret) {
+  console.error("Uso: node --env-file=.env.local scripts/buscar-fotos-ml.mjs <APP_ID> <SECRET> [--min-score=25] [--limite=N]");
   process.exit(1);
 }
 
@@ -39,6 +39,25 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// ─────────────────────────────── token do ML ────────────────────────────────
+let token = null;
+async function obterToken() {
+  const resp = await fetch("https://api.mercadolibre.com/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", accept: "application/json" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: appId,
+      client_secret: secret,
+    }),
+  });
+  const data = await resp.json();
+  if (!resp.ok || !data.access_token) {
+    throw new Error("Falha ao autenticar no ML: " + JSON.stringify(data));
+  }
+  token = data.access_token;
+}
+
 // ───────────────────────────── normalização / score ─────────────────────────
 function tokens(s) {
   return (s || "")
@@ -50,44 +69,41 @@ function tokens(s) {
     .filter((t) => t.length >= 2);
 }
 
-// Mede o quanto o título do ML cobre as palavras do nome do produto.
-function calcularScore(nomeProduto, marca, tituloML) {
+// Mede o quanto o nome do produto do ML cobre as palavras do nosso produto.
+function calcularScore(nomeProduto, marca, nomeML) {
   const pt = [...new Set(tokens(nomeProduto))];
-  const tt = new Set(tokens(tituloML));
+  const tt = new Set(tokens(nomeML));
   if (pt.length === 0 || tt.size === 0) return 0;
   let comuns = 0;
   for (const t of pt) if (tt.has(t)) comuns++;
   let s = (comuns / pt.length) * 100;
-  // Bônus se a marca também aparece no título.
   const mt = tokens(marca);
   if (mt.length > 0 && mt.every((t) => tt.has(t))) s += 15;
   return Math.min(100, Math.round(s * 10) / 10);
 }
 
-// Aumenta a resolução do thumbnail do ML.
-function imagemGrande(thumb) {
-  if (!thumb) return null;
-  return thumb
-    .replace(/^http:/, "https:")
-    .replace(/-I\.(jpg|webp|png)/i, "-O.$1")
-    .replace("D_NQ_NP_", "D_NQ_NP_2X_");
-}
-
-async function buscarML(query) {
-  const url = `https://api.mercadolibre.com/sites/MLB/search?q=${encodeURIComponent(query)}&limit=10`;
-  for (let tentativa = 0; tentativa < 2; tentativa++) {
-    const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (resp.status === 401 || resp.status === 403) throw new Error("TOKEN_INVALIDO");
-    if (resp.status === 429) { await sleep(2000); continue; }
-    if (!resp.ok) return [];
-    const data = await resp.json();
-    return data.results || [];
+// Busca no catálogo do ML. Retorna [] em erro recuperável; renova token se 401/403.
+async function buscarML(query, jaRenovou = false) {
+  const url = `https://api.mercadolibre.com/products/search?status=active&site_id=MLB&q=${encodeURIComponent(query)}&limit=10`;
+  const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (resp.status === 401 || resp.status === 403) {
+    if (jaRenovou) throw new Error("TOKEN_INVALIDO");
+    await obterToken();
+    return buscarML(query, true);
   }
-  return [];
+  if (resp.status === 429) {
+    await sleep(2000);
+    return [];
+  }
+  if (!resp.ok) return [];
+  const data = await resp.json();
+  return data.results || [];
 }
 
 // ──────────────────────────────────── main ──────────────────────────────────
 async function main() {
+  await obterToken();
+
   // 1) Produtos sem foto (paginado).
   const produtos = [];
   for (let from = 0; ; from += 1000) {
@@ -142,19 +158,19 @@ async function main() {
     } catch (e) {
       if (e.message === "TOKEN_INVALIDO") {
         await flush();
-        console.error(`\n⚠️  Token do Mercado Livre inválido/expirado na linha ${i + 1}.`);
-        console.error("Gere outro com ml-token.mjs e rode de novo — continua de onde parou.");
+        console.error(`\n⚠️  ML recusou o token na linha ${i + 1}. Rode de novo — continua de onde parou.`);
         process.exit(1);
       }
       throw e;
     }
 
-    // Escolhe o melhor resultado por score.
+    // Escolhe o melhor resultado (com foto) por score.
     let melhor = null;
     for (const r of resultados) {
-      if (!r.thumbnail) continue;
-      const s = calcularScore(p.nome, marca, r.title);
-      if (!melhor || s > melhor.score) melhor = { r, score: s };
+      const img = (r.pictures || [])[0]?.url;
+      if (!img) continue;
+      const s = calcularScore(p.nome, marca, r.name);
+      if (!melhor || s > melhor.score) melhor = { r, img, score: s };
     }
 
     if (melhor && melhor.score >= minScore) {
@@ -162,10 +178,10 @@ async function main() {
         produto_id: p.id,
         fonte: "mercadolivre",
         ml_item_id: melhor.r.id,
-        titulo: melhor.r.title,
-        imagem_url: imagemGrande(melhor.r.thumbnail),
-        url_origem: melhor.r.permalink ?? null,
-        preco_origem: typeof melhor.r.price === "number" ? melhor.r.price : null,
+        titulo: melhor.r.name,
+        imagem_url: melhor.img,
+        url_origem: `https://www.mercadolivre.com.br/p/${melhor.r.id}`,
+        preco_origem: null,
         score: melhor.score,
         status: "pendente",
       });
