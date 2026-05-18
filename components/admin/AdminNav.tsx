@@ -13,6 +13,7 @@ import {
   FileSpreadsheet,
   FileImage,
   BarChart3,
+  ImagePlus,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -44,6 +45,7 @@ const NAV_GROUPS = [
     items: [
       { href: "/admin/importar", label: "Importar planilha", icon: FileSpreadsheet, exact: true },
       { href: "/admin/importar-fotos", label: "Importar fotos PDF", icon: FileImage },
+      { href: "/admin/enriquecimento", label: "Enriquecer fotos", icon: ImagePlus },
     ],
   },
 ];
