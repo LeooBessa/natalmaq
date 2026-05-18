@@ -153,7 +153,10 @@ export async function listMarcas(): Promise<Marca[]> {
     .eq("ativo", true)
     .order("ordem")
     .order("nome");
-  return (data as Marca[]) ?? [];
+  const marcas = (data as Marca[]) ?? [];
+  // Marcas com logo têm prioridade na seção "Marcas parceiras" da home.
+  // O sort é estável: dentro de cada grupo, mantém a ordem (ordem, nome).
+  return marcas.sort((a, b) => (a.logo_url ? 0 : 1) - (b.logo_url ? 0 : 1));
 }
 
 export async function listCategorias(): Promise<Categoria[]> {
