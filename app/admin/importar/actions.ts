@@ -361,28 +361,41 @@ async function importarPdf(
   }
 
   // -------------------------------------------------------------- 2. produtos
-  // Pre-fetch produtos existentes (somente codigo). Paginado: o PostgREST
-  // devolve no máximo 1000 linhas por requisição — sem o loop, catálogos
-  // grandes ficariam quase todos marcados como "não existe".
-  const produtosExistentes = new Set<string>();
+  // Pre-fetch produtos existentes. Paginado: o PostgREST devolve no máximo
+  // 1000 linhas por requisição — sem o loop, catálogos grandes ficariam quase
+  // todos marcados como "não existe". Guarda slug/nome/marca_id porque o
+  // upsert exige as colunas NOT NULL mesmo quando o resultado é um UPDATE.
+  const produtosExistentes = new Map<
+    string,
+    { slug: string; nome: string; marca_id: string | null }
+  >();
   for (let from = 0; ; from += 1000) {
     const { data, error } = await sb
       .from("produtos")
-      .select("codigo")
+      .select("codigo, slug, nome, marca_id")
       .range(from, from + 999);
     if (error || !data || data.length === 0) break;
-    for (const p of data) produtosExistentes.add(p.codigo);
+    for (const p of data) {
+      produtosExistentes.set(p.codigo, {
+        slug: p.slug,
+        nome: p.nome,
+        marca_id: p.marca_id,
+      });
+    }
     if (data.length < 1000) break;
   }
 
   // Separa rows em "atualizar existentes" e "criar novos".
-  type UpdatePayload = {
+  type BasePayload = {
     codigo: string;
     preco: number;
     estoque: number;
     marca_id: string | null;
   };
-  type InsertPayload = UpdatePayload & {
+  // O upsert do PostgREST roda INSERT ... ON CONFLICT: a tupla precisa
+  // satisfazer as colunas NOT NULL (slug, nome) mesmo quando vira UPDATE.
+  type UpdatePayload = BasePayload & { slug: string; nome: string };
+  type InsertPayload = BasePayload & {
     slug: string;
     nome: string;
     descricao: string | null;
@@ -405,15 +418,22 @@ async function importarPdf(
       ? marcaPorNome.get(r.fabricante.toLowerCase().trim()) ?? null
       : null;
 
-    const base: UpdatePayload = {
+    const base: BasePayload = {
       codigo: r.codigo,
       preco: r.preco ?? 0,
       estoque: r.estoque ?? 0,
       marca_id: marcaId,
     };
 
-    if (produtosExistentes.has(r.codigo)) {
-      paraAtualizar.push(base);
+    const existente = produtosExistentes.get(r.codigo);
+    if (existente) {
+      // Mantém slug/nome atuais; preserva a marca quando o PDF não traz uma.
+      paraAtualizar.push({
+        ...base,
+        marca_id: marcaId ?? existente.marca_id,
+        slug: existente.slug,
+        nome: existente.nome,
+      });
     } else if (criarNovos) {
       const nome = r.descricao && r.descricao.length > 1 ? r.descricao : r.codigo;
       // Slug: nome+codigo garante unicidade.
