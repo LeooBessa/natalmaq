@@ -12,6 +12,7 @@ import {
   Ticket,
   FileSpreadsheet,
   FileImage,
+  BarChart3,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -21,6 +22,12 @@ const NAV_GROUPS = [
       { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingCart },
       { href: "/admin/produtos", label: "Produtos", icon: Package },
+    ],
+  },
+  {
+    label: "Relatórios",
+    items: [
+      { href: "/admin/curva-abc", label: "Curva ABC", icon: BarChart3 },
     ],
   },
   {
