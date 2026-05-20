@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, Tag, Package, Building2, Info } from "lucide-react";
 
@@ -20,6 +21,13 @@ type Open = "cats" | "marcas" | null;
 export function NavStrip({ categorias, marcas }: Props) {
   const [open, setOpen] = useState<Open>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Fecha ao mudar de rota (NavStrip vive no layout, sobrevive a navegações).
+  useEffect(() => {
+    setOpen(null);
+  }, [pathname, searchParams]);
 
   // Fecha ao clicar fora ou ao pressionar Esc.
   useEffect(() => {
@@ -59,7 +67,11 @@ export function NavStrip({ categorias, marcas }: Props) {
           />
         </button>
 
-        <NavLink href="/catalogo?estoque=1" icon={<Package className="h-3.5 w-3.5" />}>
+        <NavLink
+          href="/catalogo?estoque=1"
+          icon={<Package className="h-3.5 w-3.5" />}
+          onClick={() => setOpen(null)}
+        >
           Em estoque
         </NavLink>
 
@@ -79,11 +91,19 @@ export function NavStrip({ categorias, marcas }: Props) {
           />
         </button>
 
-        <NavLink href="/catalogo?promocao=1" icon={<Tag className="h-3.5 w-3.5" />}>
+        <NavLink
+          href="/catalogo?promocao=1"
+          icon={<Tag className="h-3.5 w-3.5" />}
+          onClick={() => setOpen(null)}
+        >
           Promoções
         </NavLink>
 
-        <NavLink href="/institucional" icon={<Info className="h-3.5 w-3.5" />}>
+        <NavLink
+          href="/institucional"
+          icon={<Info className="h-3.5 w-3.5" />}
+          onClick={() => setOpen(null)}
+        >
           Sobre
         </NavLink>
       </div>
@@ -106,14 +126,17 @@ function NavLink({
   href,
   icon,
   children,
+  onClick,
 }: {
   href: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
+  onClick?: () => void;
 }) {
   return (
     <Link
       href={href as never}
+      onClick={onClick}
       className="flex shrink-0 items-center gap-2 border-r border-navy-700 px-5 py-3.5 text-[13px] font-medium hover:bg-navy-700"
     >
       {icon}
@@ -219,7 +242,7 @@ function MarcasMenu({
 
 function Dropdown({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute left-0 right-0 top-full z-50 border-b border-line bg-white text-ink shadow-[0_8px_32px_rgba(10,22,40,0.18)]">
+    <div className="absolute left-0 right-0 top-full z-50 max-h-[min(70vh,640px)] overflow-y-auto border-b border-line bg-white text-ink shadow-[0_8px_32px_rgba(10,22,40,0.18)]">
       <div className="mx-auto max-w-[1280px]">{children}</div>
     </div>
   );

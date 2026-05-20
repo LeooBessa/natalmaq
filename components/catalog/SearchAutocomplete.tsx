@@ -100,33 +100,31 @@ export function SearchAutocomplete() {
   }, [focusIdx]);
 
   return (
-    <div ref={wrapRef} className="relative w-full max-w-2xl">
-      <div className="flex border-2 border-navy bg-white">
-        <div className="flex flex-1 items-center gap-2 px-3">
-          <Search className="h-4 w-4 text-ink-2" strokeWidth={2.5} />
-          <input
-            type="search"
-            role="combobox"
-            aria-label="Buscar produtos"
-            aria-expanded={open}
-            aria-autocomplete="list"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            onKeyDown={handleKeyDown}
-            placeholder="Buscar por código, marca ou produto..."
-            className="w-full bg-transparent py-2.5 text-sm text-ink outline-none placeholder:text-ink-2"
-          />
-        </div>
+    <div ref={wrapRef} className="relative w-full">
+      <div className="flex items-center gap-2 rounded-full border border-line bg-bone-2 pl-5 pr-2 py-1 transition focus-within:border-ink-2 focus-within:bg-white">
+        <input
+          type="search"
+          role="combobox"
+          aria-label="Buscar produtos"
+          aria-expanded={open}
+          aria-autocomplete="list"
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={handleKeyDown}
+          placeholder="o que você procura?"
+          className="w-full bg-transparent py-2 text-[15px] text-ink outline-none placeholder:text-ink-2"
+        />
         <button
           type="button"
           onClick={buscar}
-          className="bg-brand-500 px-5 font-extrabold uppercase tracking-wide text-white text-[13px] hover:bg-brand-400"
+          aria-label="Buscar"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-2 transition hover:bg-bone hover:text-ink"
         >
-          Buscar
+          <Search className="h-4 w-4" strokeWidth={2.25} />
         </button>
       </div>
 

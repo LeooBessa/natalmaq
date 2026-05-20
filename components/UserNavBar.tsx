@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { buttonVariants } from "@/components/ui/neon-button";
+import { cn } from "@/lib/cn";
 
 export function UserNavBar() {
   const [nome, setNome] = useState<string | null>(null);
@@ -62,9 +64,14 @@ export function UserNavBar() {
   return (
     <Link
       href="/auth"
-      className="inline-flex items-center border border-navy bg-white px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-mono text-navy hover:bg-navy hover:text-white"
+      className={cn(
+        buttonVariants({ variant: "default", size: "lg" }),
+        "inline-flex h-11 items-center border-2 border-navy bg-white font-mono text-[12px] font-bold uppercase tracking-mono text-navy hover:bg-bone hover:text-navy-800"
+      )}
     >
+      <span className="pointer-events-none absolute inset-x-0 inset-y-0 mx-auto block h-0.5 w-3/4 bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100" />
       Entrar
+      <span className="pointer-events-none absolute inset-x-0 -bottom-px mx-auto block h-0.5 w-3/4 bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-70" />
     </Link>
   );
 }

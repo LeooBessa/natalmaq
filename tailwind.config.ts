@@ -26,16 +26,16 @@ export default {
         },
         line: "#D6D2C9",
         brand: {
-          50: "#FFF1E8",
-          100: "#FFD9C2",
-          200: "#FFB48C",
-          300: "#FF9359",
-          400: "#FF7A33", // orange2 — highlight
-          500: "#E8682A", // orange — primary accent
-          600: "#CC5A24",
-          700: "#A8491E",
-          800: "#7E3818",
-          900: "#5C2911",
+          50: "#FFF4EC",
+          100: "#FFE3CC",
+          200: "#FFC299",
+          300: "#FFA266",
+          400: "#FF8533", // highlight
+          500: "#FF6B00", // primary accent — pure vivid orange
+          600: "#DB5B00",
+          700: "#B34A00",
+          800: "#8A3900",
+          900: "#5C2600",
         },
         ok: "#15803D",
       },
@@ -54,7 +54,7 @@ export default {
         "hatch-light":
           "repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 14px)",
         "hatch-orange":
-          "repeating-linear-gradient(135deg, rgba(232,104,42,0.05) 0 1px, transparent 1px 14px)",
+          "repeating-linear-gradient(135deg, rgba(255,107,0,0.05) 0 1px, transparent 1px 14px)",
       },
       letterSpacing: {
         mono: "0.08em",

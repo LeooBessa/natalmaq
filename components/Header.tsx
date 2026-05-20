@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { ShoppingCart } from "lucide-react";
 
 import { NavStrip } from "@/components/NavStrip";
 import { SearchAutocomplete } from "@/components/catalog/SearchAutocomplete";
@@ -16,6 +18,11 @@ type Props = {
 
 export function Header({ categorias, marcas }: Props) {
   const total = useCart((s) => s.totalItens());
+  // Cart vem do localStorage (zustand persist) → no SSR é sempre 0.
+  // Só renderiza o badge após mount para evitar hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const totalVisivel = mounted ? total : 0;
 
   return (
     <header className="sticky top-0 z-40">
@@ -56,13 +63,15 @@ export function Header({ categorias, marcas }: Props) {
             <UserNavBar />
             <Link
               href="/carrinho"
-              className="group inline-flex items-center gap-3 bg-navy px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-navy-800"
+              aria-label={`Carrinho${totalVisivel > 0 ? ` com ${totalVisivel} ${totalVisivel === 1 ? "item" : "itens"}` : ""}`}
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border-2 border-brand-500 bg-white text-brand-500 transition hover:bg-brand-50 hover:text-brand-600"
             >
-              <span className="hidden md:inline">Meu Carrinho</span>
-              <span className="md:hidden">Carrinho</span>
-              <span className="inline-flex min-w-[28px] items-center justify-center bg-brand-500 px-2 py-0.5 font-mono text-xs">
-                {total}
-              </span>
+              <ShoppingCart className="h-5 w-5" strokeWidth={2.25} />
+              {totalVisivel > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex min-w-[20px] items-center justify-center rounded-full bg-brand-500 px-1.5 py-0.5 font-mono text-[11px] font-bold leading-none text-white ring-2 ring-bone">
+                  {totalVisivel > 99 ? "99+" : totalVisivel}
+                </span>
+              )}
             </Link>
           </div>
         </div>

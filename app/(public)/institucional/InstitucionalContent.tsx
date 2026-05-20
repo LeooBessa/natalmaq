@@ -432,7 +432,7 @@ export default function InstitucionalContent() {
                   <div
                     className="absolute left-1/2 top-1/2 aspect-square w-[210%] pointer-events-none"
                     style={{
-                      background: "conic-gradient(transparent 0deg, transparent 250deg, #E8682A 280deg, #FF7A33 300deg, #E8682A 320deg, transparent 350deg)",
+                      background: "conic-gradient(transparent 0deg, transparent 250deg, #FF6B00 280deg, #FF8533 300deg, #FF6B00 320deg, transparent 350deg)",
                       animation: "rotateBorder 4s linear infinite",
                     }}
                   />
