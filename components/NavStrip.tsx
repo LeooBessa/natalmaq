@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, Tag, Package, Building2, Info } from "lucide-react";
 
@@ -22,12 +22,11 @@ export function NavStrip({ categorias, marcas }: Props) {
   const [open, setOpen] = useState<Open>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   // Fecha ao mudar de rota (NavStrip vive no layout, sobrevive a navegações).
   useEffect(() => {
     setOpen(null);
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   // Fecha ao clicar fora ou ao pressionar Esc.
   useEffect(() => {
