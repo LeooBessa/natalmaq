@@ -2,7 +2,7 @@
 
 Plataforma de orçamento digital com identidade industrial. Cliente monta a cesta, vê preço/estoque/frete em tempo real e finaliza por deeplink `wa.me`. Admin gerencia catálogo (Kanban + CRUDs), pedidos e importa preço/estoque em massa via planilha **ou PDF do Delphi Sistemas** com auto-categorização e auto-agrupamento de variantes.
 
-🌐 **Produção:** https://natalmaq.vercel.app
+🌐 **Produção:** https://natalmaq-main.vercel.app
 
 ## Stack
 
@@ -68,7 +68,7 @@ Preencha `.env.local` com:
   - `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` (browser)
   - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` (server)
 - **Loja:** `NEXT_PUBLIC_LOJA_WHATSAPP` (formato `5584999999999`), nome, cidade
-- **Site:** `NEXT_PUBLIC_SITE_URL=http://localhost:3000` (em prod = `https://natalmaq.vercel.app`)
+- **Site:** `NEXT_PUBLIC_SITE_URL=http://localhost:3000` (em prod = `https://natalmaq-main.vercel.app`)
 
 > Atalho na máquina nova: se já tiver `vercel link` feito (passo 5), use `vercel env pull .env.local` para baixar todas as envs configuradas em produção.
 
