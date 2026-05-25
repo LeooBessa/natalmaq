@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+import re
+
+from fastapi import APIRouter, HTTPException, Query, Response
 
 from ..core.supabase import get_supabase
 
@@ -57,6 +59,30 @@ async def list_produtos(
     result = query.execute()
 
     return {"items": result.data or [], "total": result.count or 0}
+
+
+_UUID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+
+
+@router.get("/recomendacoes")
+async def recomendacoes_carrinho(
+    response: Response,
+    ids: str = Query(..., max_length=512, description="UUIDs de produtos no carrinho, separados por vírgula"),
+    limit: int = Query(default=3, ge=1, le=12),
+):
+    cart_ids = [s.strip() for s in ids.split(",") if _UUID_RE.match(s.strip())]
+    if not cart_ids:
+        return {"items": []}
+    response.headers["Cache-Control"] = "private, max-age=60"
+    sb = get_supabase()
+    resp = sb.rpc(
+        "recomendar_para_carrinho",
+        {"cart_ids": cart_ids, "limite": limit},
+    ).execute()
+    return {"items": resp.data or []}
 
 
 @router.get("/{slug}")
