@@ -7,6 +7,7 @@ import { Trash2 } from "lucide-react";
 import { useCart } from "@/lib/cart-store";
 import { formatBRL } from "@/lib/format";
 import { FreteEstimativa } from "@/components/carrinho/FreteEstimativa";
+import { CartRecommendations } from "@/components/carrinho/CartRecommendations";
 
 export default function CarrinhoPage() {
   const { itens, setQuantidade, removeItem, subtotal, propostaId } = useCart();
@@ -37,6 +38,8 @@ export default function CarrinhoPage() {
           </div>
         </div>
       </div>
+
+      <CartRecommendations />
 
       <div className="mx-auto max-w-[1280px] px-6 py-8">
         {itens.length === 0 ? (
