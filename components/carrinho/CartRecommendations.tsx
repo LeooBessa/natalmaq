@@ -58,7 +58,7 @@ export function CartRecommendations() {
   if (!loading && recomendacoes.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-[1280px] px-6 py-8">
+    <section className="mx-auto max-w-[900px] px-6 py-8">
       <div className="mb-4 font-mono text-[11px] uppercase tracking-mono text-ink-2">
         PODE TE INTERESSAR
       </div>
