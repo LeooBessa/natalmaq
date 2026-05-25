@@ -2,6 +2,8 @@
 -- Cascata: complementares (+10, acumula) → categoria (+3, binário) → marca (+1, binário).
 -- Filtros aplicados no SELECT final: ativo=true, produto_pai_id IS NULL, estoque>0,
 -- e exclusão dos próprios itens do carrinho.
+--
+-- Rollback: DROP FUNCTION public.recomendar_para_carrinho(uuid[], int);
 
 create or replace function public.recomendar_para_carrinho(
   cart_ids uuid[],

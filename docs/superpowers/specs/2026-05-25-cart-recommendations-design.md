@@ -76,7 +76,7 @@ create or replace function public.recomendar_para_carrinho(
 returns table (
   id uuid, codigo text, slug text, nome text, descricao text,
   marca_id uuid, categoria_id uuid, preco numeric, preco_promocional numeric,
-  estoque int, peso_kg numeric, imagens text[], complementares uuid[],
+  estoque int, peso_kg numeric, imagens jsonb, complementares uuid[],
   ativo boolean, destaque boolean, produto_pai_id uuid, variante_label text,
   marca jsonb, score int
 )
