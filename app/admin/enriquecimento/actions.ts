@@ -83,7 +83,9 @@ export async function rejeitarEnriquecimento(id: string): Promise<AcaoResult> {
 // Busca de candidatos no Mercado Livre (em lotes, disparada pelo painel)
 // ============================================================================
 
-const LOTE = 60;
+// LOTE = 8 cabe em ~7s e respeita o hard cap de 10s do plano Vercel Hobby
+// pra Server Actions. Aumentar só após migrar pro Pro (60s) ou pra cron Python.
+const LOTE = 8;
 const MIN_SCORE = 35;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
