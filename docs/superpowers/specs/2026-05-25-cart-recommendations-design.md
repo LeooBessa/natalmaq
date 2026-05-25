@@ -36,22 +36,30 @@ Para cada `produto_id` no carrinho, coleta candidatos em três níveis:
 
 Quando o carrinho tem N itens, candidatos são deduplicados por `id` e pontuados:
 
-| Origem do match | Peso |
-|---|---|
-| Aparece em `complementares[]` de um item do carrinho | +10 |
-| Compartilha `categoria_id` com um item do carrinho | +3 |
-| Compartilha `marca_id` com um item do carrinho | +1 |
+| Origem do match | Peso | Acumula? |
+|---|---|---|
+| Aparece em `complementares[]` de um item do carrinho | +10 | **Sim** (uma vez por item que o referencia) |
+| Compartilha `categoria_id` com pelo menos um item do carrinho | +3 | **Não** (binário) |
+| Compartilha `marca_id` com pelo menos um item do carrinho | +1 | **Não** (binário) |
 
-O score acumula. Um candidato que é complementar de 2 itens e da mesma marca de 1 outro ganha `10+10+1=21`.
+Justificativa do design assimétrico: `complementares[]` é curadoria humana — quanto mais itens do cart referenciam o mesmo produto como complementar, mais forte o sinal, então acumula. Categoria e marca são genéricas — se acumulassem, um carrinho de 5 furadeiras daria +15 baseline a toda furadeira do catálogo, dominando o sinal curado (+10) de um único complementar.
+
+Exemplos:
+
+- Candidato complementar de 2 itens, mesma categoria de algum item, mesma marca de algum item: `10+10+3+1 = 24`.
+- Candidato sem complementar match, mas com cart de 5 itens da mesma categoria E mesma marca: `0+3+1 = 4` (não `15+5`).
 
 Ordenação: `score DESC`, desempate por `preco_promocional IS NOT NULL DESC`, `estoque DESC`, `nome ASC` (estabilidade).
 
 Top 3 são retornados.
 
-### Filtros (aplicados em todos os níveis)
+### Filtros
+
+Aplicados no `SELECT` final (a RPC reúne candidatos primeiro e filtra depois, simplicidade > micro-otimização):
 
 - `ativo = true`
 - `produto_pai_id IS NULL` (só pais, igual catálogo público)
+- `estoque > 0` (não recomendar esgotado — perde sentido na cesta)
 - `id NOT IN (<ids do carrinho>)` — nunca recomendar o que já está no carrinho.
 
 ## Arquitetura
@@ -70,7 +78,7 @@ returns table (
   marca_id uuid, categoria_id uuid, preco numeric, preco_promocional numeric,
   estoque int, peso_kg numeric, imagens text[], complementares uuid[],
   ativo boolean, destaque boolean, produto_pai_id uuid, variante_label text,
-  marca_nome text, score int
+  marca jsonb, score int
 )
 language sql
 stable
@@ -82,31 +90,32 @@ as $$
     from produtos p
     where p.id = any(cart_ids)
   ),
-  complementares as (
+  -- Nível 1: complementares acumulam (uma linha por (item_cart, cand_id))
+  complementares_score as (
     select unnest(c.complementares) as cand_id, 10 as peso
     from carrinho c
   ),
-  por_categoria as (
-    select p.id as cand_id, 3 as peso
+  -- Nível 2: categoria binária (DISTINCT cand_id → 1 linha por candidato)
+  categoria_score as (
+    select distinct p.id as cand_id, 3 as peso
     from produtos p
-    join carrinho c on p.categoria_id = c.categoria_id
-    where p.ativo and p.produto_pai_id is null
+    where p.categoria_id in (select categoria_id from carrinho where categoria_id is not null)
   ),
-  por_marca as (
-    select p.id as cand_id, 1 as peso
+  -- Nível 3: marca binária (DISTINCT cand_id → 1 linha por candidato)
+  marca_score as (
+    select distinct p.id as cand_id, 1 as peso
     from produtos p
-    join carrinho c on p.marca_id = c.marca_id
-    where p.ativo and p.produto_pai_id is null
+    where p.marca_id in (select marca_id from carrinho where marca_id is not null)
   ),
   candidatos as (
-    select cand_id, peso from complementares
+    select cand_id, peso from complementares_score
     union all
-    select cand_id, peso from por_categoria
+    select cand_id, peso from categoria_score
     union all
-    select cand_id, peso from por_marca
+    select cand_id, peso from marca_score
   ),
   scored as (
-    select cand_id, sum(peso) as score
+    select cand_id, sum(peso)::int as score
     from candidatos
     where cand_id is not null
       and cand_id <> all(cart_ids)
@@ -117,13 +126,16 @@ as $$
     p.marca_id, p.categoria_id, p.preco, p.preco_promocional,
     p.estoque, p.peso_kg, p.imagens, p.complementares,
     p.ativo, p.destaque, p.produto_pai_id, p.variante_label,
-    m.nome as marca_nome,
-    s.score::int
+    case when m.id is null then null
+         else jsonb_build_object('id', m.id, 'nome', m.nome, 'slug', m.slug)
+    end as marca,
+    s.score
   from scored s
   join produtos p on p.id = s.cand_id
   left join marcas m on m.id = p.marca_id
   where p.ativo
     and p.produto_pai_id is null
+    and p.estoque > 0
   order by
     s.score desc,
     (p.preco_promocional is not null) desc,
@@ -135,15 +147,21 @@ $$;
 grant execute on function public.recomendar_para_carrinho(uuid[], int) to anon, authenticated;
 ```
 
+**Por que `marca jsonb` e não `marca_nome text`:** `ProductCard` lê `produto.marca?.nome` e `produto.marca?.slug` (type `ProdutoComMarca` em [types/index.ts:35-38](types/index.ts#L35-L38)). RPC retornar `jsonb` deserializa direto pro shape esperado no JSON da resposta, sem mapping extra no Python.
+
 **Endpoint novo** — `api/routers/produtos.py`:
 
 ```python
+from fastapi import Response
+
 @router.get("/produtos/recomendacoes")
 async def recomendacoes_carrinho(
+    response: Response,
     ids: str = Query(..., description="UUIDs separados por vírgula"),
     limit: int = Query(3, ge=1, le=12),
 ):
     cart_ids = [s.strip() for s in ids.split(",") if s.strip()]
+    response.headers["Cache-Control"] = "private, max-age=60"
     if not cart_ids:
         return {"items": []}
     sb = get_supabase()
@@ -154,7 +172,7 @@ async def recomendacoes_carrinho(
     return {"items": resp.data or []}
 ```
 
-Headers de resposta: `Cache-Control: private, max-age=60` (carrinhos mudam rápido; 60s evita refetch em re-renders).
+`Cache-Control: private, max-age=60` evita refetch em re-renders dentro da mesma sessão; 60s é curto o bastante pra ajustes de cart serem refletidos rápido. A injeção de `Response` é o padrão FastAPI pra setar headers sem trocar o tipo de retorno.
 
 ### Frontend
 
@@ -176,11 +194,13 @@ Headers de resposta: `Cache-Control: private, max-age=60` (carrinhos mudam rápi
 
 **Edição** — `app/(public)/carrinho/page.tsx`:
 
-Adicionar `<CartRecommendations />` entre o bloco do header (linhas 17-39 do estado atual) e o bloco com lista + sidebar.
+A página tem um ternário (`itens.length === 0 ? "estado vazio" : "lista+sidebar"`). `<CartRecommendations />` é colocado **fora** do ternário, no escopo do `<div className="bg-bone">` raiz, logo após o bloco do header (linhas ~17-39 do estado atual) e **antes** do ternário. Como o próprio componente retorna `null` quando o cart está vazio, isso evita lógica duplicada e mantém a posição consistente quando o cart sai/entra do estado vazio.
+
+**Container width:** o componente é responsável pelo próprio wrapper `mx-auto max-w-[1280px] px-6 py-8`, espelhando o padrão da página. Sem isso, a faixa renderiza full-width enquanto header e lista ficam constritos a 1280px — alinhamento horizontal inconsistente.
 
 ### Reuso do ProductCard
 
-`components/catalog/ProductCard.tsx` é usado sem adaptação. Props esperadas: `{ produto: ProdutoComMarca }`. O shape retornado pela RPC casa com esse type (campos `marca_nome` + todos os campos de `produtos`).
+`components/catalog/ProductCard.tsx` é usado sem adaptação. Props esperadas: `{ produto: ProdutoComMarca }` ([types/index.ts:35-38](types/index.ts#L35-L38)). O shape retornado pela RPC casa porque `marca` vem como `jsonb` com `{ id, nome, slug }`, deserializando direto no objeto aninhado que o card consome.
 
 ## Comportamento e edge cases
 
@@ -235,6 +255,9 @@ Adicionar `<CartRecommendations />` entre o bloco do header (linhas 17-39 do est
 - **Sem TanStack Query**: projeto não usa; introduzir uma dep pra uma chamada não compensa.
 - **Posicionamento entre header e lista**: escolha explícita do usuário (visibilidade alta antes da revisão da cesta).
 - **Sem tracking no MVP**: instrumentar depois com endpoint separado.
+- **Score binário em categoria/marca, acumulado em complementares**: protege contra inflação por carrinhos homogêneos (5 itens da mesma categoria não devem dominar o sinal curado pelo admin).
+- **`marca` como `jsonb` na RPC**: deserializa direto no shape `ProdutoComMarca` que o `ProductCard` consome, sem mapping extra no Python.
+- **`estoque > 0` no filtro final**: recomendar produto esgotado degrada UX (botão "+ Orçamento" fica desabilitado no card, parece bug).
 
 ## Critério de aceitação
 
