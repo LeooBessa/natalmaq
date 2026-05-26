@@ -13,20 +13,41 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import Link from "next/link";
+import { ArrowDownUp } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 
 import { formatBRL } from "@/lib/format";
 import { updateStatusAction } from "../actions";
+import {
+  PEDIDO_STATUS,
+  PEDIDO_STATUS_KANBAN,
+  PEDIDO_STATUS_LABEL,
+  type PedidoStatus,
+} from "../_lib/status";
 import type { KanbanPedido } from "./page";
 
-type Status = KanbanPedido["status"];
+type SortBy = "data_asc" | "data_desc" | "valor_asc" | "valor_desc";
 
-const COLUMNS: { key: Status; label: string; color: string }[] = [
-  { key: "pendente", label: "Pendente", color: "bg-yellow-50 border-yellow-200" },
-  { key: "aprovado", label: "Aprovado", color: "bg-blue-50 border-blue-200" },
-  { key: "enviado", label: "Enviado", color: "bg-green-50 border-green-200" },
-  { key: "recusado", label: "Recusado", color: "bg-red-50 border-red-200" },
+const SORT_OPTIONS: { value: SortBy; label: string }[] = [
+  { value: "data_asc", label: "Mais antigos (FIFO)" },
+  { value: "data_desc", label: "Mais recentes" },
+  { value: "valor_asc", label: "Menor valor" },
+  { value: "valor_desc", label: "Maior valor" },
 ];
+
+function sortPedidos(arr: KanbanPedido[], sortBy: SortBy): KanbanPedido[] {
+  const copy = [...arr];
+  switch (sortBy) {
+    case "data_asc":
+      return copy.sort((a, b) => a.criado_em.localeCompare(b.criado_em));
+    case "data_desc":
+      return copy.sort((a, b) => b.criado_em.localeCompare(a.criado_em));
+    case "valor_asc":
+      return copy.sort((a, b) => Number(a.total) - Number(b.total));
+    case "valor_desc":
+      return copy.sort((a, b) => Number(b.total) - Number(a.total));
+  }
+}
 
 export function KanbanBoard({ pedidos: inicial }: { pedidos: KanbanPedido[] }) {
   const [pedidos, setPedidos] = useState(inicial);
@@ -34,20 +55,34 @@ export function KanbanBoard({ pedidos: inicial }: { pedidos: KanbanPedido[] }) {
   const [, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
 
+  // Ordenacao por coluna (default: data_asc = FIFO).
+  const [sortBy, setSortBy] = useState<Record<PedidoStatus, SortBy>>({
+    pendente: "data_asc",
+    aprovado: "data_asc",
+    confirmado: "data_asc",
+    enviado: "data_asc",
+    recusado: "data_asc",
+  });
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
   const grouped = useMemo(() => {
-    const map: Record<Status, KanbanPedido[]> = {
+    const map: Record<PedidoStatus, KanbanPedido[]> = {
       pendente: [],
       aprovado: [],
+      confirmado: [],
       enviado: [],
       recusado: [],
     };
     for (const p of pedidos) map[p.status].push(p);
+    // Aplica ordenacao por coluna
+    for (const k of PEDIDO_STATUS) {
+      map[k] = sortPedidos(map[k], sortBy[k]);
+    }
     return map;
-  }, [pedidos]);
+  }, [pedidos, sortBy]);
 
   const active = activeId ? pedidos.find((p) => p.id === activeId) : null;
 
@@ -58,7 +93,7 @@ export function KanbanBoard({ pedidos: inicial }: { pedidos: KanbanPedido[] }) {
   function onDragEnd(e: DragEndEvent) {
     setActiveId(null);
     const pedidoId = String(e.active.id);
-    const novo = e.over?.id ? (String(e.over.id) as Status) : null;
+    const novo = e.over?.id ? (String(e.over.id) as PedidoStatus) : null;
     if (!novo) return;
     const atual = pedidos.find((p) => p.id === pedidoId);
     if (!atual || atual.status === novo) return;
@@ -80,6 +115,10 @@ export function KanbanBoard({ pedidos: inicial }: { pedidos: KanbanPedido[] }) {
     });
   }
 
+  function changeSort(status: PedidoStatus, value: SortBy) {
+    setSortBy((prev) => ({ ...prev, [status]: value }));
+  }
+
   return (
     <>
       {erro && (
@@ -92,14 +131,16 @@ export function KanbanBoard({ pedidos: inicial }: { pedidos: KanbanPedido[] }) {
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {COLUMNS.map((col) => (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {PEDIDO_STATUS.map((key) => (
             <Column
-              key={col.key}
-              status={col.key}
-              label={col.label}
-              color={col.color}
-              pedidos={grouped[col.key]}
+              key={key}
+              status={key}
+              label={PEDIDO_STATUS_LABEL[key]}
+              color={PEDIDO_STATUS_KANBAN[key]}
+              pedidos={grouped[key]}
+              sortBy={sortBy[key]}
+              onSortChange={(s) => changeSort(key, s)}
             />
           ))}
         </div>
@@ -117,11 +158,15 @@ function Column({
   label,
   color,
   pedidos,
+  sortBy,
+  onSortChange,
 }: {
-  status: Status;
+  status: PedidoStatus;
   label: string;
   color: string;
   pedidos: KanbanPedido[];
+  sortBy: SortBy;
+  onSortChange: (s: SortBy) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
@@ -131,12 +176,29 @@ function Column({
         isOver ? "ring-2 ring-brand-400" : ""
       }`}
     >
-      <header className="mb-3 flex items-center justify-between">
-        <h2 className="font-semibold">{label}</h2>
-        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold">
+      <header className="mb-2 flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold leading-tight">{label}</h2>
+        <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-bold">
           {pedidos.length}
         </span>
       </header>
+
+      <div className="mb-3 flex items-center gap-1">
+        <ArrowDownUp className="h-3 w-3 shrink-0 text-zinc-400" />
+        <select
+          value={sortBy}
+          onChange={(e) => onSortChange(e.target.value as SortBy)}
+          aria-label={`Ordenar coluna ${label}`}
+          className="w-full rounded border border-zinc-300 bg-white px-1.5 py-0.5 text-[11px] outline-none focus:border-brand-500"
+        >
+          {SORT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="space-y-2">
         {pedidos.map((p) => (
           <Card key={p.id} pedido={p} />

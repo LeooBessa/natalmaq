@@ -7,22 +7,10 @@ import { buildOrderMessage, buildWaLink } from "@/lib/whatsapp";
 import { StatusBadge } from "../../dashboard/page";
 import { PedidoActions } from "./PedidoActions";
 import { PedidoEditor } from "./PedidoEditor";
+import { PedidoTimeline } from "./PedidoTimeline";
+import { isPedidoStatus } from "../_lib/status";
 
 export const dynamic = "force-dynamic";
-
-const FORMA_LABEL: Record<string, string> = {
-  pix: "PIX (à vista)",
-  dinheiro: "Dinheiro (à vista)",
-  cartao_debito: "Cartão de débito",
-  cartao_credito_1x: "Cartão de crédito à vista",
-  cartao_credito_3x: "Cartão de crédito 3×",
-  cartao_credito_6x: "Cartão de crédito 6×",
-  cartao_credito_12x: "Cartão de crédito 12×",
-  boleto_30: "Boleto 30 dias",
-  boleto_30_60: "Boleto 30/60 dias",
-  boleto_30_60_90: "Boleto 30/60/90 dias",
-  faturado_28: "Faturado 28 dias",
-};
 
 export default async function PedidoDetalhePage({
   params,
@@ -35,7 +23,7 @@ export default async function PedidoDetalhePage({
   const { data: pedido } = await sb
     .from("pedidos")
     .select(
-      "id, numero, status, cliente_nome, cliente_telefone, cliente_email, endereco, subtotal, desconto, frete_valor, total, observacoes, whatsapp_url, forma_pagamento, criado_em, atualizado_em",
+      "id, numero, status, cliente_nome, cliente_telefone, cliente_email, endereco, subtotal, desconto, frete_valor, total, observacoes, whatsapp_url, criado_em, atualizado_em, aprovado_em, confirmado_em, enviado_em, recusado_em",
     )
     .eq("id", id)
     .maybeSingle();
@@ -152,12 +140,6 @@ export default async function PedidoDetalhePage({
                 <Row label="Desconto" value={`-${formatBRL(Number(pedido.desconto))}`} />
               )}
               <Row label="Frete" value={formatBRL(Number(pedido.frete_valor))} />
-              {pedido.forma_pagamento && (
-                <Row
-                  label="Pagamento"
-                  value={FORMA_LABEL[pedido.forma_pagamento] ?? pedido.forma_pagamento}
-                />
-              )}
               <Row label="TOTAL" value={formatBRL(Number(pedido.total))} bold />
             </tfoot>
           </table>
@@ -200,19 +182,27 @@ export default async function PedidoDetalhePage({
             waClienteUrl={waClienteUrl}
             observacoes={pedido.observacoes ?? ""}
           />
-        </section>
 
-        {/* Editor de pedido — largura total (col-span-2) */}
-        <section className="lg:col-span-2">
-          <PedidoEditor
-            pedidoId={pedido.id}
-            itens={itensNorm}
-            descontoGeralInicial={Number(pedido.desconto ?? 0)}
-            freteInicial={Number(pedido.frete_valor)}
-            formaPagamentoInicial={pedido.forma_pagamento ?? null}
-          />
+          {isPedidoStatus(pedido.status) && (
+            <PedidoTimeline
+              status={pedido.status}
+              criado_em={pedido.criado_em}
+              aprovado_em={pedido.aprovado_em ?? null}
+              confirmado_em={pedido.confirmado_em ?? null}
+              enviado_em={pedido.enviado_em ?? null}
+              recusado_em={pedido.recusado_em ?? null}
+            />
+          )}
         </section>
       </div>
+
+      {/* Editor de pedido — full-width abaixo do grid (evita buraco vazio em pedidos pequenos) */}
+      <PedidoEditor
+        pedidoId={pedido.id}
+        itens={itensNorm}
+        descontoGeralInicial={Number(pedido.desconto ?? 0)}
+        freteInicial={Number(pedido.frete_valor)}
+      />
     </div>
   );
 }

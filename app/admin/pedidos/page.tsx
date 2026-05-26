@@ -4,11 +4,12 @@ import { MessageCircle } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
 import { StatusBadge } from "../dashboard/page";
+import { PEDIDO_STATUS, PEDIDO_STATUS_LABEL_CURTO } from "./_lib/status";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pedidos" };
 
-const STATUSES = ["pendente", "aprovado", "enviado", "recusado"] as const;
+const STATUSES = PEDIDO_STATUS;
 
 type SearchParams = Promise<{
   status?: string;
@@ -83,7 +84,7 @@ export default async function PedidosPage({
           >
             <option value="">Todos</option>
             {STATUSES.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>{PEDIDO_STATUS_LABEL_CURTO[s]}</option>
             ))}
           </select>
         </div>

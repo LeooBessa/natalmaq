@@ -3,12 +3,11 @@
 import { revalidatePath } from "next/cache";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-type Status = "pendente" | "aprovado" | "enviado" | "recusado";
+import type { PedidoStatus } from "./_lib/status";
 
 export async function updateStatusAction(
   pedidoId: string,
-  novoStatus: Status,
+  novoStatus: PedidoStatus,
   observacoes?: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const sb = await createSupabaseServerClient();
@@ -33,17 +32,30 @@ export async function editarPedidoAction(
   data: {
     desconto: number;
     frete_valor: number;
-    forma_pagamento: string;
-    itens: { id: string; disponivel: boolean; desconto_perc: number }[];
+    itens: {
+      id: string;
+      disponivel: boolean;
+      desconto_perc: number;
+      quantidade: number;
+      preco_unit: number;
+    }[];
   },
 ): Promise<{ ok: boolean; error?: string }> {
   const sb = await createSupabaseServerClient();
 
-  // Atualiza disponibilidade e desconto de cada item
+  // Atualiza quantidade, disponibilidade, desconto e preco_total de cada item.
+  // preco_total = quantidade * preco_unit (preco_unit nao muda; e snapshot do preco vigente).
   for (const item of data.itens) {
+    const qtd = Math.max(1, Math.floor(item.quantidade));
+    const precoTotal = item.preco_unit * qtd;
     const { error } = await sb
       .from("pedido_itens")
-      .update({ disponivel: item.disponivel, desconto_perc: item.desconto_perc })
+      .update({
+        quantidade: qtd,
+        preco_total: precoTotal,
+        disponivel: item.disponivel,
+        desconto_perc: item.desconto_perc,
+      })
       .eq("id", item.id);
     if (error) return { ok: false, error: error.message };
   }
@@ -73,7 +85,6 @@ export async function editarPedidoAction(
       frete_valor: data.frete_valor,
       subtotal,
       total,
-      forma_pagamento: data.forma_pagamento || null,
     })
     .eq("id", pedidoId);
 

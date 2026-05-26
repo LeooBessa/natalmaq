@@ -132,6 +132,15 @@ export function BannersManager({ banners }: { banners: Banner[] }) {
 
         <div className="space-y-2">
           <label className="block text-xs font-semibold text-zinc-700">Imagem *</label>
+          <div className="rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-[11px] leading-relaxed text-blue-900">
+            <p className="font-semibold">Recomendado:</p>
+            <ul className="mt-1 list-disc pl-4">
+              <li><b>Dimensão:</b> 1920 × 600 px (ou maior, proporção 3:1)</li>
+              <li><b>Altura mínima:</b> 520 px</li>
+              <li><b>Formato:</b> JPG ou WebP, abaixo de 300 KB</li>
+              <li><b>Composição:</b> elemento principal no centro vertical (bordas podem ser cortadas em telas largas/mobile)</li>
+            </ul>
+          </div>
           {imagemUrl ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}

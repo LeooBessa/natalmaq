@@ -2,7 +2,13 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { loginAction, cadastroAction } from "./actions";
+import { useRouter } from "next/navigation";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { Endereco } from "@/types";
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (typeof window !== "undefined" ? window.location.origin : "");
 
 type Tab = "entrar" | "cadastro";
 
@@ -37,6 +43,7 @@ async function buscarCep(cep: string) {
 // Login
 // ---------------------------------------------------------------------------
 function LoginForm({ next }: { next: string }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
 
@@ -44,9 +51,22 @@ function LoginForm({ next }: { next: string }) {
     e.preventDefault();
     setErro(null);
     const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("email") ?? "").trim();
+    const senha = String(fd.get("senha") ?? "");
     startTransition(async () => {
-      const r = await loginAction(fd);
-      if (r && !r.ok) setErro(r.error);
+      // signIn no cliente: seta cookie via @supabase/ssr E dispara
+      // onAuthStateChange(SIGNED_IN) → UserNavBar atualiza nome sem F5.
+      const sb = createSupabaseBrowserClient();
+      const { error } = await sb.auth.signInWithPassword({
+        email,
+        password: senha,
+      });
+      if (error) {
+        setErro("E-mail ou senha inválidos.");
+        return;
+      }
+      router.push(next);
+      router.refresh();
     });
   }
 
@@ -88,6 +108,7 @@ function LoginForm({ next }: { next: string }) {
 // Cadastro
 // ---------------------------------------------------------------------------
 function CadastroForm({ next }: { next: string }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [confirmar, setConfirmar] = useState(false);
@@ -111,16 +132,84 @@ function CadastroForm({ next }: { next: string }) {
     e.preventDefault();
     setErro(null);
     const fd = new FormData(e.currentTarget);
-    const senha = fd.get("senha") as string;
-    const confirmarSenha = fd.get("confirmar_senha") as string;
+
+    const email = String(fd.get("email") ?? "").trim();
+    const senha = String(fd.get("senha") ?? "");
+    const confirmarSenha = String(fd.get("confirmar_senha") ?? "");
+    const nome = String(fd.get("nome") ?? "").trim();
+    const contato = String(fd.get("contato") ?? "").trim();
+
+    if (!email || !senha || !nome || !contato) {
+      setErro("Preencha todos os campos obrigatórios.");
+      return;
+    }
+    if (senha.length < 6) {
+      setErro("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
     if (senha !== confirmarSenha) {
       setErro("As senhas não coincidem.");
       return;
     }
+
+    const endereco: Endereco = {
+      cep: String(fd.get("cep") ?? "").replace(/\D/g, ""),
+      rua: String(fd.get("rua") ?? "").trim(),
+      numero: String(fd.get("numero") ?? "").trim(),
+      bairro: String(fd.get("bairro") ?? "").trim(),
+      cidade: String(fd.get("cidade") ?? "").trim(),
+      uf: String(fd.get("uf") ?? "").trim().toUpperCase(),
+      complemento: String(fd.get("complemento") ?? "").trim() || undefined,
+    };
+
     startTransition(async () => {
-      const r = await cadastroAction(fd);
-      if (!r.ok) setErro(r.error);
-      else if (r.confirmar) setConfirmar(true);
+      // signUp no cliente: dispara onAuthStateChange(SIGNED_IN) automaticamente
+      // quando ja vem com sessao imediata (sem email confirmation).
+      const sb = createSupabaseBrowserClient();
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password: senha,
+        options: {
+          emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(next)}`,
+        },
+      });
+
+      if (error) {
+        if (error.message.includes("already registered")) {
+          setErro("Este e-mail já está cadastrado. Faça login.");
+        } else {
+          setErro(error.message);
+        }
+        return;
+      }
+
+      if (!data.user) {
+        setErro("Erro ao criar conta. Tente novamente.");
+        return;
+      }
+
+      // Cria perfil em clientes (RLS permite self-insert via auth.uid() = id).
+      const { error: clienteError } = await sb.from("clientes").insert({
+        id: data.user.id,
+        nome,
+        contato,
+        email,
+        endereco,
+      });
+      if (clienteError) {
+        setErro("Erro ao salvar perfil: " + clienteError.message);
+        return;
+      }
+
+      // Sessao imediata → loga direto e atualiza header sem F5.
+      if (data.session) {
+        router.push(next);
+        router.refresh();
+        return;
+      }
+
+      // Sem sessao → email confirmation pendente.
+      setConfirmar(true);
     });
   }
 

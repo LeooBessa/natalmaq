@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Copy, MessageCircle, X } from "lucide-react";
+import { Check, Copy, MessageCircle, UserCheck, X } from "lucide-react";
 
 import { updateStatusAction } from "../actions";
+import type { PedidoStatus } from "../_lib/status";
 
 type Props = {
   pedidoId: string;
@@ -25,7 +26,7 @@ export function PedidoActions({
   const [erro, setErro] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
 
-  function changeStatus(novo: "aprovado" | "recusado" | "enviado" | "pendente") {
+  function changeStatus(novo: PedidoStatus) {
     setErro(null);
     startTransition(async () => {
       const r = await updateStatusAction(pedidoId, novo, obs);
@@ -71,6 +72,14 @@ export function PedidoActions({
         >
           <X className="h-4 w-4" />
           Recusar
+        </button>
+        <button
+          disabled={pending || status === "confirmado"}
+          onClick={() => changeStatus("confirmado")}
+          className="col-span-2 inline-flex items-center justify-center gap-1 rounded-md bg-purple-600 px-3 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-40"
+        >
+          <UserCheck className="h-4 w-4" />
+          Confirmado pelo cliente
         </button>
         <button
           disabled={pending || status === "enviado"}

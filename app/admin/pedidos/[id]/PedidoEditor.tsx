@@ -8,6 +8,7 @@ type Item = {
   codigo: string;
   nome_snapshot: string;
   quantidade: number;
+  preco_unit: number;
   preco_total: number;
   disponivel: boolean;
   desconto_perc: number;
@@ -18,68 +19,7 @@ type Props = {
   itens: Item[];
   descontoGeralInicial: number;
   freteInicial: number;
-  formaPagamentoInicial: string | null;
 };
-
-const METODOS = [
-  { value: "", label: "Não informado" },
-  { value: "pix", label: "PIX" },
-  { value: "dinheiro", label: "Dinheiro" },
-  { value: "debito", label: "Cartão de débito" },
-  { value: "credito", label: "Cartão de crédito" },
-  { value: "boleto", label: "Boleto bancário" },
-  { value: "faturado", label: "Faturado" },
-];
-
-function parseFormaPagamento(fp: string | null): { metodo: string; condicao: string } {
-  if (!fp) return { metodo: "", condicao: "" };
-  if (fp.startsWith("PIX")) return { metodo: "pix", condicao: "" };
-  if (fp.startsWith("Dinheiro")) return { metodo: "dinheiro", condicao: "" };
-  if (fp.startsWith("Cartão de débito")) return { metodo: "debito", condicao: "" };
-  if (fp.startsWith("Cartão de crédito")) {
-    const m = fp.match(/(\d+)/);
-    return { metodo: "credito", condicao: m ? m[1] : "" };
-  }
-  if (fp.startsWith("Boleto")) {
-    const m = fp.match(/Boleto\s+(.+?)\s+dias/);
-    return { metodo: "boleto", condicao: m ? m[1] : "" };
-  }
-  if (fp.startsWith("Faturado")) {
-    const m = fp.match(/Faturado\s+(.+?)\s+dias/);
-    return { metodo: "faturado", condicao: m ? m[1] : "" };
-  }
-  return { metodo: "", condicao: fp };
-}
-
-function buildFormaPagamento(metodo: string, condicao: string): string {
-  switch (metodo) {
-    case "pix": return "PIX à vista";
-    case "dinheiro": return "Dinheiro à vista";
-    case "debito": return "Cartão de débito";
-    case "credito":
-      return condicao ? `Cartão de crédito ${condicao}×` : "Cartão de crédito à vista";
-    case "boleto":
-      return condicao ? `Boleto ${condicao} dias` : "Boleto bancário";
-    case "faturado":
-      return condicao ? `Faturado ${condicao} dias` : "Faturado";
-    default: return "";
-  }
-}
-
-function showsCondicao(metodo: string) {
-  return ["credito", "boleto", "faturado"].includes(metodo);
-}
-
-function condicaoLabel(metodo: string) {
-  return metodo === "credito" ? "Nº de parcelas" : "Prazo (dias)";
-}
-
-function condicaoPlaceholder(metodo: string) {
-  if (metodo === "credito") return "Ex: 6";
-  if (metodo === "boleto") return "Ex: 30/60/90";
-  if (metodo === "faturado") return "Ex: 28";
-  return "";
-}
 
 function fmt(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -93,7 +33,6 @@ export function PedidoEditor({
   itens,
   descontoGeralInicial,
   freteInicial,
-  formaPagamentoInicial,
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
@@ -101,10 +40,6 @@ export function PedidoEditor({
 
   const [descontoGeral, setDescontoGeral] = useState(descontoGeralInicial.toFixed(2));
   const [frete, setFrete] = useState(freteInicial.toFixed(2));
-
-  const parsed = parseFormaPagamento(formaPagamentoInicial);
-  const [metodo, setMetodo] = useState(parsed.metodo);
-  const [condicao, setCondicao] = useState(parsed.condicao);
 
   const [disponibilidade, setDisponibilidade] = useState<Record<string, boolean>>(
     Object.fromEntries(itens.map((i) => [i.id, i.disponivel])),
@@ -114,13 +49,17 @@ export function PedidoEditor({
       itens.map((i) => [i.id, i.desconto_perc > 0 ? String(i.desconto_perc) : ""]),
     ),
   );
+  const [quantidades, setQuantidades] = useState<Record<string, string>>(
+    Object.fromEntries(itens.map((i) => [i.id, String(i.quantidade)])),
+  );
 
   const descontoGeralNum = parseFloat(descontoGeral) || 0;
   const freteNum = parseFloat(frete) || 0;
 
   function itemEfetivo(item: Item): number {
+    const qtd = Math.max(1, parseInt(quantidades[item.id] || "1") || 1);
     const disc = parseFloat(descontosItem[item.id] || "0") || 0;
-    return item.preco_total * (1 - disc / 100);
+    return item.preco_unit * qtd * (1 - disc / 100);
   }
 
   const subtotalDisponivel = itens
@@ -139,19 +78,24 @@ export function PedidoEditor({
     setSalvo(false);
   }
 
+  function setQtdItem(id: string, val: string) {
+    setQuantidades((prev) => ({ ...prev, [id]: val }));
+    setSalvo(false);
+  }
+
   function salvar() {
     setErro(null);
     setSalvo(false);
     startTransition(async () => {
-      const forma = buildFormaPagamento(metodo, condicao);
       const r = await editarPedidoAction(pedidoId, {
         desconto: descontoGeralNum,
         frete_valor: freteNum,
-        forma_pagamento: forma,
         itens: itens.map((i) => ({
           id: i.id,
           disponivel: disponibilidade[i.id],
           desconto_perc: parseFloat(descontosItem[i.id] || "0") || 0,
+          quantidade: Math.max(1, parseInt(quantidades[i.id] || "1") || 1),
+          preco_unit: i.preco_unit,
         })),
       });
       if (r.ok) setSalvo(true);
@@ -195,64 +139,63 @@ export function PedidoEditor({
         </div>
       </div>
 
-      {/* Forma de pagamento */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label htmlFor="metodo-pagamento" className="mb-1 block text-xs font-medium text-zinc-500">
-            Forma de pagamento
-          </label>
-          <select
-            id="metodo-pagamento"
-            value={metodo}
-            onChange={(e) => { setMetodo(e.target.value); setCondicao(""); setSalvo(false); }}
-            className={inputCls}
-          >
-            {METODOS.map((m) => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
-          </select>
-        </div>
-        {showsCondicao(metodo) && (
-          <div>
-            <label htmlFor="condicao-pagamento" className="mb-1 block text-xs font-medium text-zinc-500">
-              {condicaoLabel(metodo)}
-            </label>
-            <input
-              id="condicao-pagamento"
-              type={metodo === "credito" ? "number" : "text"}
-              min={metodo === "credito" ? 1 : undefined}
-              value={condicao}
-              onChange={(e) => { setCondicao(e.target.value); setSalvo(false); }}
-              placeholder={condicaoPlaceholder(metodo)}
-              className={inputCls}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Desconto por item + disponibilidade */}
+      {/* Itens: quantidade + desconto + disponibilidade */}
       <div>
         <p className="mb-2 text-xs font-medium text-zinc-500">
-          Desconto por produto e disponibilidade
+          Quantidade, desconto por produto e disponibilidade
         </p>
         <div className="divide-y divide-zinc-100 rounded border border-zinc-200">
           {itens.map((item) => {
             const disp = disponibilidade[item.id];
             const discStr = descontosItem[item.id] || "";
             const discPerc = parseFloat(discStr) || 0;
-            const efetivo = item.preco_total * (1 - discPerc / 100);
+            const qtd = Math.max(1, parseInt(quantidades[item.id] || "1") || 1);
+            const precoTotal = item.preco_unit * qtd;
+            const efetivo = precoTotal * (1 - discPerc / 100);
             const temDesconto = discPerc > 0;
 
             return (
               <div
                 key={item.id}
-                className={`flex items-center gap-2 px-3 py-2.5 ${!disp ? "bg-red-50" : ""}`}
+                className={`flex flex-wrap items-center gap-2 px-3 py-2.5 ${!disp ? "bg-red-50" : ""}`}
               >
                 {/* Info do item */}
                 <div className={`min-w-0 flex-1 text-sm ${!disp ? "text-zinc-400" : "text-zinc-800"}`}>
                   <span className="mr-1 font-mono text-xs text-zinc-400">{item.codigo}</span>
                   <span className={!disp ? "line-through" : ""}>{item.nome_snapshot}</span>
-                  <span className="ml-1 text-xs text-zinc-400">×{item.quantidade}</span>
+                  <div className="text-[11px] text-zinc-400">
+                    {fmt(item.preco_unit)} cada
+                  </div>
+                </div>
+
+                {/* Input de quantidade */}
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setQtdItem(item.id, String(Math.max(1, qtd - 1)))}
+                    disabled={qtd <= 1}
+                    aria-label="Diminuir quantidade"
+                    className="rounded border border-zinc-300 px-2 py-0.5 text-zinc-600 hover:bg-zinc-50 disabled:opacity-40"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={quantidades[item.id] || ""}
+                    onChange={(e) => setQtdItem(item.id, e.target.value)}
+                    aria-label={`Quantidade de ${item.nome_snapshot}`}
+                    className="w-12 rounded border border-zinc-300 px-1 py-1 text-center text-xs outline-none focus:border-brand-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQtdItem(item.id, String(qtd + 1))}
+                    aria-label="Aumentar quantidade"
+                    className="rounded border border-zinc-300 px-2 py-0.5 text-zinc-600 hover:bg-zinc-50"
+                  >
+                    +
+                  </button>
                 </div>
 
                 {/* Input de desconto % */}
@@ -276,7 +219,7 @@ export function PedidoEditor({
                   {temDesconto ? (
                     <>
                       <div className="text-[11px] leading-none text-zinc-400 line-through">
-                        {fmt(item.preco_total)}
+                        {fmt(precoTotal)}
                       </div>
                       <div className="text-sm font-semibold text-brand-600">
                         {fmt(efetivo)}
@@ -284,7 +227,7 @@ export function PedidoEditor({
                     </>
                   ) : (
                     <div className={`text-sm font-semibold ${!disp ? "text-zinc-400 line-through" : "text-zinc-700"}`}>
-                      {fmt(item.preco_total)}
+                      {fmt(precoTotal)}
                     </div>
                   )}
                 </div>
@@ -323,14 +266,6 @@ export function PedidoEditor({
           <span>Frete</span>
           <span>{fmt(freteNum)}</span>
         </div>
-        {metodo && (
-          <div className="flex justify-between text-zinc-500">
-            <span>Pagamento</span>
-            <span className="font-medium text-zinc-700">
-              {buildFormaPagamento(metodo, condicao)}
-            </span>
-          </div>
-        )}
         <div className="flex justify-between border-t border-zinc-200 pt-1.5 font-bold text-zinc-900">
           <span>Total calculado</span>
           <span>{fmt(totalCalculado)}</span>

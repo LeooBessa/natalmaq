@@ -14,14 +14,28 @@ import {
   FileImage,
   BarChart3,
   ImagePlus,
+  Kanban,
+  Archive,
 } from "lucide-react";
 
-const NAV_GROUPS = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+  nested?: boolean;
+};
+
+type NavGroup = { label: string; items: NavItem[] };
+
+const NAV_GROUPS: NavGroup[] = [
   {
     label: "Principal",
     items: [
       { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-      { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingCart },
+      { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingCart, exact: true },
+      { href: "/admin/pedidos/kanban", label: "Kanban", icon: Kanban, nested: true },
+      { href: "/admin/pedidos/historico", label: "Histórico", icon: Archive, nested: true },
       { href: "/admin/produtos", label: "Produtos", icon: Package },
     ],
   },
@@ -61,7 +75,7 @@ export function AdminNav() {
             {group.label}
           </p>
           <div className="flex flex-col gap-0.5">
-            {group.items.map(({ href, label, icon: Icon, exact }) => {
+            {group.items.map(({ href, label, icon: Icon, exact, nested }) => {
               const isActive = exact
                 ? pathname === href
                 : pathname === href || pathname.startsWith(href + "/");
@@ -69,7 +83,9 @@ export function AdminNav() {
                 <Link
                   key={href}
                   href={href as never}
-                  className={`flex items-center gap-2.5 rounded-md px-3 py-2 transition ${
+                  className={`flex items-center gap-2.5 rounded-md py-2 transition ${
+                    nested ? "pl-8 pr-3 text-[13px]" : "px-3"
+                  } ${
                     isActive
                       ? "bg-brand-50 font-semibold text-brand-700"
                       : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"

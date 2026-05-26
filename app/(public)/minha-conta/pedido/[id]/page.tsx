@@ -8,10 +8,11 @@ import type { Endereco } from "@/types";
 export const dynamic = "force-dynamic";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
-  pendente: { label: "Pendente",  cls: "bg-yellow-100 text-yellow-800" },
-  aprovado: { label: "Aprovado",  cls: "bg-blue-100 text-blue-800" },
-  enviado:  { label: "Enviado",   cls: "bg-ok/20 text-ok" },
-  recusado: { label: "Recusado",  cls: "bg-red-100 text-red-700" },
+  pendente:   { label: "Pendente",                cls: "bg-yellow-100 text-yellow-800" },
+  aprovado:   { label: "Aprovado pelo vendedor",  cls: "bg-blue-100 text-blue-800" },
+  confirmado: { label: "Confirmado pelo cliente", cls: "bg-purple-100 text-purple-800" },
+  enviado:    { label: "Enviado",                 cls: "bg-ok/20 text-ok" },
+  recusado:   { label: "Recusado",                cls: "bg-red-100 text-red-700" },
 };
 
 export default async function PedidoDetalhePage({

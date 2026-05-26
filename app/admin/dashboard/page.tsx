@@ -3,6 +3,14 @@ import { TrendingUp, ShoppingCart, Package, ImageOff, Clock } from "lucide-react
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
+import {
+  PEDIDO_STATUS,
+  PEDIDO_STATUS_BADGE,
+  PEDIDO_STATUS_BORDER,
+  PEDIDO_STATUS_LABEL_CURTO,
+  PEDIDO_STATUS_TEXT,
+  isPedidoStatus,
+} from "../pedidos/_lib/status";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Dashboard" };
@@ -28,25 +36,10 @@ function horasAtras(iso: string) {
   return `${Math.floor(horas / 24)}d atrás`;
 }
 
-const STATUS_ORDER = ["pendente", "aprovado", "enviado", "recusado"] as const;
-const STATUS_LABELS: Record<string, string> = {
-  pendente: "Pendente",
-  aprovado: "Aprovado",
-  enviado: "Enviado",
-  recusado: "Recusado",
-};
-const STATUS_BORDER: Record<string, string> = {
-  pendente: "border-yellow-400",
-  aprovado: "border-blue-400",
-  enviado: "border-green-400",
-  recusado: "border-red-400",
-};
-const STATUS_TEXT: Record<string, string> = {
-  pendente: "text-yellow-700",
-  aprovado: "text-blue-700",
-  enviado: "text-green-700",
-  recusado: "text-red-700",
-};
+const STATUS_ORDER = PEDIDO_STATUS;
+const STATUS_LABELS = PEDIDO_STATUS_LABEL_CURTO;
+const STATUS_BORDER = PEDIDO_STATUS_BORDER;
+const STATUS_TEXT = PEDIDO_STATUS_TEXT;
 
 export default async function DashboardPage() {
   const sb = await createSupabaseServerClient();
@@ -294,15 +287,11 @@ function AlertCard({
 }
 
 export function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    pendente: "bg-yellow-100 text-yellow-800",
-    aprovado: "bg-blue-100 text-blue-800",
-    enviado: "bg-green-100 text-green-800",
-    recusado: "bg-red-100 text-red-700",
-  };
+  const cls = isPedidoStatus(status) ? PEDIDO_STATUS_BADGE[status] : "bg-zinc-100 text-zinc-700";
+  const label = isPedidoStatus(status) ? PEDIDO_STATUS_LABEL_CURTO[status] : status;
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${styles[status] ?? "bg-zinc-100 text-zinc-700"}`}>
-      {status}
+    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>
+      {label}
     </span>
   );
 }

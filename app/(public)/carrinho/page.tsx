@@ -22,7 +22,7 @@ export default function CarrinhoPage() {
             NATALMAQ / SOLICITAÇÃO DE ORÇAMENTO
           </div>
           <h1 className="mt-2 font-display text-[28px] tracking-tight text-ink md:text-[36px]">
-            Sua Cesta de Orçamento
+            Meu carrinho
           </h1>
           <div className="mt-1 text-sm text-ink-2">
             {itens.length} item{itens.length !== 1 && "s"}
