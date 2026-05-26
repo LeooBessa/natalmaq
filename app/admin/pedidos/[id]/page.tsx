@@ -93,9 +93,10 @@ export default async function PedidoDetalhePage({
         <StatusBadge status={pedido.status} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Itens + totais */}
-        <section className="rounded-lg border border-zinc-200 bg-white lg:col-span-2">
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        {/* Coluna esquerda (2/3): Itens + Editor empilhados */}
+        <div className="space-y-6 lg:col-span-2">
+        <section className="rounded-lg border border-zinc-200 bg-white">
           <h2 className="border-b border-zinc-200 px-5 py-3 font-semibold">Itens</h2>
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 text-left text-xs uppercase text-zinc-500">
@@ -144,6 +145,15 @@ export default async function PedidoDetalhePage({
             </tfoot>
           </table>
         </section>
+
+        {/* Editor de pedido — empilha abaixo dos itens na mesma coluna esquerda */}
+        <PedidoEditor
+          pedidoId={pedido.id}
+          itens={itensNorm}
+          descontoGeralInicial={Number(pedido.desconto ?? 0)}
+          freteInicial={Number(pedido.frete_valor)}
+        />
+        </div>
 
         {/* Coluna direita: Cliente + Endereço + Ações */}
         <section className="space-y-4">
@@ -195,14 +205,6 @@ export default async function PedidoDetalhePage({
           )}
         </section>
       </div>
-
-      {/* Editor de pedido — full-width abaixo do grid (evita buraco vazio em pedidos pequenos) */}
-      <PedidoEditor
-        pedidoId={pedido.id}
-        itens={itensNorm}
-        descontoGeralInicial={Number(pedido.desconto ?? 0)}
-        freteInicial={Number(pedido.frete_valor)}
-      />
     </div>
   );
 }

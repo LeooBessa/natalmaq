@@ -55,14 +55,8 @@ export function KanbanBoard({ pedidos: inicial }: { pedidos: KanbanPedido[] }) {
   const [, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
 
-  // Ordenacao por coluna (default: data_asc = FIFO).
-  const [sortBy, setSortBy] = useState<Record<PedidoStatus, SortBy>>({
-    pendente: "data_asc",
-    aprovado: "data_asc",
-    confirmado: "data_asc",
-    enviado: "data_asc",
-    recusado: "data_asc",
-  });
+  // Ordenacao GLOBAL (1 select, aplica em todas as colunas).
+  const [sortBy, setSortBy] = useState<SortBy>("data_asc");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -77,9 +71,8 @@ export function KanbanBoard({ pedidos: inicial }: { pedidos: KanbanPedido[] }) {
       recusado: [],
     };
     for (const p of pedidos) map[p.status].push(p);
-    // Aplica ordenacao por coluna
     for (const k of PEDIDO_STATUS) {
-      map[k] = sortPedidos(map[k], sortBy[k]);
+      map[k] = sortPedidos(map[k], sortBy);
     }
     return map;
   }, [pedidos, sortBy]);
@@ -115,15 +108,31 @@ export function KanbanBoard({ pedidos: inicial }: { pedidos: KanbanPedido[] }) {
     });
   }
 
-  function changeSort(status: PedidoStatus, value: SortBy) {
-    setSortBy((prev) => ({ ...prev, [status]: value }));
-  }
-
   return (
     <>
       {erro && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{erro}</p>
       )}
+
+      {/* Filtro único de ordenação (aplica em todas as colunas) */}
+      <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2">
+        <ArrowDownUp className="h-4 w-4 shrink-0 text-zinc-500" />
+        <label htmlFor="kanban-sort" className="text-sm font-medium text-zinc-600">
+          Ordenar todas as colunas por:
+        </label>
+        <select
+          id="kanban-sort"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortBy)}
+          className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm outline-none focus:border-brand-500"
+        >
+          {SORT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <DndContext
         sensors={sensors}
@@ -139,8 +148,6 @@ export function KanbanBoard({ pedidos: inicial }: { pedidos: KanbanPedido[] }) {
               label={PEDIDO_STATUS_LABEL[key]}
               color={PEDIDO_STATUS_KANBAN[key]}
               pedidos={grouped[key]}
-              sortBy={sortBy[key]}
-              onSortChange={(s) => changeSort(key, s)}
             />
           ))}
         </div>
@@ -158,15 +165,11 @@ function Column({
   label,
   color,
   pedidos,
-  sortBy,
-  onSortChange,
 }: {
   status: PedidoStatus;
   label: string;
   color: string;
   pedidos: KanbanPedido[];
-  sortBy: SortBy;
-  onSortChange: (s: SortBy) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   return (
@@ -176,28 +179,12 @@ function Column({
         isOver ? "ring-2 ring-brand-400" : ""
       }`}
     >
-      <header className="mb-2 flex items-center justify-between gap-2">
+      <header className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold leading-tight">{label}</h2>
         <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-bold">
           {pedidos.length}
         </span>
       </header>
-
-      <div className="mb-3 flex items-center gap-1">
-        <ArrowDownUp className="h-3 w-3 shrink-0 text-zinc-400" />
-        <select
-          value={sortBy}
-          onChange={(e) => onSortChange(e.target.value as SortBy)}
-          aria-label={`Ordenar coluna ${label}`}
-          className="w-full rounded border border-zinc-300 bg-white px-1.5 py-0.5 text-[11px] outline-none focus:border-brand-500"
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
 
       <div className="space-y-2">
         {pedidos.map((p) => (
