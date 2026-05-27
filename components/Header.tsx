@@ -34,7 +34,7 @@ export function Header({ categorias, marcas }: Props) {
             <span className="text-brand-400">● ATENDIMENTO ATIVO</span>
           </div>
           <div className="flex items-center gap-5">
-            <span>(84) 3000-0000</span>
+            <span>(84) 3025-9789</span>
             <span>VENDAS@NATALMAQ.COM.BR</span>
           </div>
         </div>

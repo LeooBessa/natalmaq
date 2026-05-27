@@ -201,7 +201,7 @@ export default async function HomePage() {
               "ENTREGA EM TODO RN",
               "Frota própria com saída diária para Natal e região metropolitana.",
               "Falar no WhatsApp →",
-              "https://wa.me/5584981295219",
+              "https://wa.me/558430259789",
             ],
             [
               "ASSISTÊNCIA TÉCNICA",

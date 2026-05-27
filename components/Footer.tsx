@@ -48,15 +48,15 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="tel:+558430000000"
+                  href="tel:+558430259789"
                   className="transition hover:text-white"
                 >
-                  (84) 3000-0000
+                  (84) 3025-9789
                 </a>
               </li>
               <li>
                 <a
-                  href="https://wa.me/5584981295219"
+                  href="https://wa.me/558430259789"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transition hover:text-white"

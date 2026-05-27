@@ -532,7 +532,7 @@ export default function InstitucionalContent() {
 
                 <Reveal delay={260}>
                   <a
-                    href="https://wa.me/5584981295219"
+                    href="https://wa.me/558430259789"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex w-full items-center justify-center gap-2 bg-brand-500 py-4 font-mono text-[11px] uppercase tracking-mono text-white transition-all hover:gap-3 hover:brightness-110"
