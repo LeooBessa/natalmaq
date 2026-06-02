@@ -79,6 +79,7 @@ type ArtigoUpdate = {
   categoria_label: string | null;
   excerpt: string;
   imagem: string | null;
+  imagem_alt: string | null;
   corpo: ArticleBlock[];
   cluster_id: string | null;
   eh_pilar: boolean;
@@ -113,6 +114,7 @@ function parseForm(formData: FormData): ArtigoUpdate {
     categoria_label: str(formData.get("categoria_label")) || null,
     excerpt: str(formData.get("excerpt")),
     imagem: str(formData.get("imagem")) || null,
+    imagem_alt: str(formData.get("imagem_alt")) || null,
     corpo,
     cluster_id: str(formData.get("cluster_id")) || null,
     eh_pilar: formData.get("eh_pilar") === "on",
@@ -191,6 +193,7 @@ export async function updateArtigoAction(
       categoria_label: data.categoria_label,
       excerpt: data.excerpt,
       imagem: data.imagem,
+      imagem_alt: data.imagem_alt,
       corpo: data.corpo,
       cluster_id: data.cluster_id,
       eh_pilar: data.eh_pilar,

@@ -14,6 +14,7 @@ export interface Article {
   title: string;
   excerpt: string;
   image: string;
+  imageAlt?: string;   // texto alternativo da capa (acessibilidade + SEO)
   date: string;        // exibição em pt-BR (ex: "26 de maio de 2026")
   isoDate: string;     // machine-readable p/ schema/metadata (ex: "2026-05-26")
   readingTime: string;

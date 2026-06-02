@@ -108,7 +108,7 @@ export default async function ArticlePage({ params }: PageProps) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={article.image}
-          alt={article.title}
+          alt={article.imageAlt || article.title}
           className="absolute inset-0 h-full w-full object-cover object-[50%_40%]"
         />
       </header>

@@ -69,6 +69,7 @@ export type ArtigoEditorData = {
   categoria_label: string;
   excerpt: string;
   imagem: string;
+  imagem_alt: string;
   corpo: ArticleBlock[];
   cluster_id: string;
   cluster_slug?: string;
@@ -138,9 +139,9 @@ export function ArtigoEditor({
   const [howto, setHowto] = useState<HowToValue>(artigo.howto);
 
   const [imagem, setImagem] = useState<string>(artigo.imagem);
-  // O alt da capa NÃO tem coluna na 0019: é só client-side (alimenta o score).
-  // FOLLOWUP: migration futura `alter table artigos add column imagem_alt text`.
-  const [imagemAlt, setImagemAlt] = useState("");
+  // alt da capa: persiste em artigos.imagem_alt (migration 0023). Usado no
+  // <img alt> público e conta no SEO score.
+  const [imagemAlt, setImagemAlt] = useState(artigo.imagem_alt ?? "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -275,6 +276,7 @@ export function ArtigoEditor({
       <input type="hidden" name="published_at" value={publishedAt} />
       <input type="hidden" name="status" value={status} />
       <input type="hidden" name="imagem" value={imagem} />
+      <input type="hidden" name="imagem_alt" value={imagemAlt} />
       <input type="hidden" name="corpo" value={JSON.stringify(blocks)} />
       <input type="hidden" name="faq" value={JSON.stringify(faq)} />
       <input

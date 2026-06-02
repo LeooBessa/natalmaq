@@ -94,6 +94,7 @@ function rowToArticle(row: Record<string, unknown>): Article {
     title: String(row.titulo ?? ""),
     excerpt: String(row.excerpt ?? ""),
     image: (row.imagem as string) ?? "",
+    imageAlt: (row.imagem_alt as string) ?? undefined,
     date: formatDatePtBR(row.published_at as string),
     isoDate: isoDateOnly(row.published_at as string),
     readingTime: row.reading_time
@@ -114,7 +115,7 @@ function rowToArticle(row: Record<string, unknown>): Article {
 }
 
 const ARTIGO_SELECT =
-  "slug, titulo, categoria_label, excerpt, imagem, corpo, keywords, reading_time, published_at, autor_nome, faq, howto, cluster_id";
+  "slug, titulo, categoria_label, excerpt, imagem, imagem_alt, corpo, keywords, reading_time, published_at, autor_nome, faq, howto, cluster_id";
 
 // --- Artigos ---------------------------------------------------------------
 

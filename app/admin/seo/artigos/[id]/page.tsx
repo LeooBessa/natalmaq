@@ -61,7 +61,7 @@ async function carregar(id: string): Promise<{
     const { data, error } = await sb
       .from("artigos")
       .select(
-        "id, slug, titulo, categoria_label, excerpt, imagem, corpo, cluster_id, eh_pilar, meta_title, meta_description, keywords, status, published_at, autor_nome, reading_time, faq, howto, cluster:clusters!artigos_cluster_id_fkey(slug)",
+        "id, slug, titulo, categoria_label, excerpt, imagem, imagem_alt, corpo, cluster_id, eh_pilar, meta_title, meta_description, keywords, status, published_at, autor_nome, reading_time, faq, howto, cluster:clusters!artigos_cluster_id_fkey(slug)",
       )
       .eq("id", id)
       .maybeSingle();
@@ -80,6 +80,7 @@ async function carregar(id: string): Promise<{
       categoria_label: (row.categoria_label as string) ?? "",
       excerpt: String(row.excerpt ?? ""),
       imagem: (row.imagem as string) ?? "",
+      imagem_alt: (row.imagem_alt as string) ?? "",
       corpo: toBlocks(row.corpo),
       cluster_id: (row.cluster_id as string) ?? "",
       cluster_slug:
