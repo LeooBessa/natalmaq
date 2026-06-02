@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { articles } from "@/lib/articles";
+import { listArtigos, listClusters, listLandings } from "@/lib/conteudo";
 import { listCategorias, listMarcas } from "@/lib/data";
 
 const SITE_URL =
@@ -20,13 +20,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/institucional`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
   ];
 
-  // Artigos (fonte: lib/articles.ts)
-  const artigos: MetadataRoute.Sitemap = articles.map((a) => ({
-    url: `${SITE_URL}/artigos/${a.slug}`,
-    lastModified: new Date(a.isoDate),
-    changeFrequency: "yearly",
-    priority: 0.6,
-  }));
+  // Artigos (fonte: Supabase com fallback a lib/articles.ts)
+  const listaArtigos = await listArtigos();
+  const artigos: MetadataRoute.Sitemap = listaArtigos.map((a) => {
+    // isoDate pode vir vazio (row sem published_at): evita Invalid Date no XML.
+    const d = a.isoDate ? new Date(a.isoDate) : now;
+    return {
+      url: `${SITE_URL}/artigos/${a.slug}`,
+      lastModified: Number.isNaN(d.getTime()) ? now : d,
+      changeFrequency: "yearly" as const,
+      priority: 0.6,
+    };
+  });
 
   // Marcas e categorias (best-effort — não quebra o sitemap se o Supabase falhar)
   let dinamicas: MetadataRoute.Sitemap = [];
@@ -50,5 +55,52 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     dinamicas = [];
   }
 
-  return [...estaticas, ...artigos, ...dinamicas];
+  // Clusters (guias) e landings (soluções) — só existem após a migration 0019.
+  // Best-effort: listas vazias (sem migration) não adicionam NADA, nem o índice.
+  // Quando houver conteúdo, adiciona o índice /guias|/solucoes + cada slug.
+  let conteudoSeo: MetadataRoute.Sitemap = [];
+  try {
+    const [clusters, landings] = await Promise.all([
+      listClusters(),
+      listLandings(),
+    ]);
+
+    if (clusters.length > 0) {
+      conteudoSeo.push({
+        url: `${SITE_URL}/guias`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      });
+      for (const c of clusters) {
+        conteudoSeo.push({
+          url: `${SITE_URL}/guias/${c.slug}`,
+          lastModified: now,
+          changeFrequency: "weekly" as const,
+          priority: 0.7,
+        });
+      }
+    }
+
+    if (landings.length > 0) {
+      conteudoSeo.push({
+        url: `${SITE_URL}/solucoes`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      });
+      for (const l of landings) {
+        conteudoSeo.push({
+          url: `${SITE_URL}/solucoes/${l.slug}`,
+          lastModified: now,
+          changeFrequency: "weekly" as const,
+          priority: 0.7,
+        });
+      }
+    }
+  } catch {
+    conteudoSeo = [];
+  }
+
+  return [...estaticas, ...artigos, ...dinamicas, ...conteudoSeo];
 }

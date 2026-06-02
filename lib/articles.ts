@@ -20,6 +20,13 @@ export interface Article {
   keywords?: string[];
   author?: string;     // default "Equipe Natalmaq"
   content: ArticleBlock[];
+  // --- Campos OPCIONAIS retrocompatíveis (SEO Fase 1) ---
+  // FAQ e HowTo são campos ESTRUTURADOS dedicados (não blocos de content). São
+  // renderizados na página e espelhados no JSON-LD (FAQPage/HowTo). Decisão do
+  // doc 00: FAQ/HowTo são estruturados, não viram ArticleBlock.
+  faq?: { question: string; answer: string }[];
+  howto?: { name: string; steps: { name: string; text: string }[] } | null;
+  cluster?: string; // slug do cluster/pillar a que o artigo pertence
 }
 
 export const articles: Article[] = [

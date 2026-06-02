@@ -3,7 +3,8 @@ import { Archivo_Black, Inter, JetBrains_Mono } from "next/font/google";
 
 import "./globals.css";
 import { AuthHashHandler } from "@/components/auth/AuthHashHandler";
-import { LOJA_ENDERECO } from "@/lib/loja";
+import { organizationNode, storeNode } from "@/lib/seo/jsonld";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
@@ -34,28 +35,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Schema sitewide: identifica a Natalmaq como loja física pro Google (SEO local).
-const ORG_JSONLD = {
-  "@context": "https://schema.org",
-  "@type": "Store",
-  name: "Natalmaq",
-  description:
-    "Loja de máquinas, ferramentas, equipamentos e EPI's em Natal/RN.",
-  url: SITE_URL,
-  telephone: "+55-84-3025-9789",
-  image: `${SITE_URL}/brand/natalmaq-lockup.png`,
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: LOJA_ENDERECO.rua,
-    addressLocality: LOJA_ENDERECO.cidade,
-    addressRegion: LOJA_ENDERECO.uf,
-    postalCode: LOJA_ENDERECO.cep,
-    addressCountry: "BR",
-  },
-  openingHours: ["Mo-Fr 07:00-18:00", "Sa 07:00-12:00"],
-  areaServed: "Rio Grande do Norte",
-};
-
 export const viewport: Viewport = {
   themeColor: "#0A1628",
   width: "device-width",
@@ -73,10 +52,7 @@ export default function RootLayout({
       className={`${inter.variable} ${archivoBlack.variable} ${jetbrains.variable}`}
     >
       <body className="min-h-screen bg-bone font-sans text-ink antialiased">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}
-        />
+        <JsonLd data={[organizationNode(), storeNode()]} />
         <AuthHashHandler />
         {children}
       </body>

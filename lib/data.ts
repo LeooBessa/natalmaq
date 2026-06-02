@@ -145,6 +145,27 @@ export async function getProdutoBySlug(
   return { ...produto, complementares_produtos, variantes };
 }
 
+/**
+ * Busca produtos ativos por uma lista de ids (uuid), preservando a ordem dos
+ * ids passados (útil para a vitrine curada `produtos_destaque` das landings).
+ * Best-effort: ids vazios -> []; nunca lança fora do padrão do client.
+ */
+export async function listProdutosByIds(
+  ids: string[],
+): Promise<ProdutoComMarca[]> {
+  if (!ids || ids.length === 0) return [];
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from("produtos")
+    .select(PRODUTO_SELECT)
+    .in("id", ids)
+    .eq("ativo", true);
+  const produtos = (data as unknown as ProdutoComMarca[]) ?? [];
+  // Reordena conforme a ordem curada dos ids.
+  const byId = new Map(produtos.map((p) => [p.id, p]));
+  return ids.map((id) => byId.get(id)).filter((p): p is ProdutoComMarca => !!p);
+}
+
 export async function listMarcas(): Promise<Marca[]> {
   const sb = getServerSupabase();
   const { data } = await sb

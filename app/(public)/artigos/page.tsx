@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { articles } from "@/lib/articles";
+import { listArtigos } from "@/lib/conteudo";
+import { breadcrumbNode, collectionNode } from "@/lib/seo/jsonld";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
   title: "Artigos",
@@ -10,9 +12,27 @@ export const metadata: Metadata = {
   alternates: { canonical: "/artigos" },
 };
 
-export default function ArtigosIndexPage() {
+export default async function ArtigosIndexPage() {
+  const articles = await listArtigos();
+
+  const jsonLd = [
+    collectionNode({
+      name: "Artigos",
+      path: "/artigos",
+      items: articles.map((a) => ({
+        name: a.title,
+        path: `/artigos/${a.slug}`,
+      })),
+    }),
+    breadcrumbNode([
+      { name: "Início", path: "/" },
+      { name: "Artigos", path: "/artigos" },
+    ]),
+  ];
+
   return (
     <div className="bg-bone">
+      <JsonLd data={jsonLd} />
       {/* Header */}
       <div className="border-b border-line bg-white">
         <div className="mx-auto max-w-[1280px] px-6 py-10">

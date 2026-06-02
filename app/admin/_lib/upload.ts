@@ -3,7 +3,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function uploadParaBucket(
-  bucket: "produtos" | "marketing",
+  bucket: "produtos" | "marketing" | "conteudo",
   formData: FormData,
 ): Promise<{ url?: string; error?: string }> {
   const file = formData.get("file");

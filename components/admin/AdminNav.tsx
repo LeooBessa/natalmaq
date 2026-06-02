@@ -16,6 +16,10 @@ import {
   ImagePlus,
   Kanban,
   Archive,
+  Search,
+  FileText,
+  Network,
+  LayoutTemplate,
 } from "lucide-react";
 
 type NavItem = {
@@ -43,6 +47,15 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Relatórios",
     items: [
       { href: "/admin/curva-abc", label: "Curva ABC", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Conteúdo / SEO",
+    items: [
+      { href: "/admin/seo", label: "Painel SEO", icon: Search, exact: true },
+      { href: "/admin/seo/artigos", label: "Artigos", icon: FileText },
+      { href: "/admin/seo/clusters", label: "Clusters", icon: Network },
+      { href: "/admin/seo/landing", label: "Landing pages", icon: LayoutTemplate },
     ],
   },
   {

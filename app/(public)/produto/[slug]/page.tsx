@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -5,8 +6,33 @@ import { ProductCard } from "@/components/catalog/ProductCard";
 import { ProdutoComVariantes } from "@/components/produto/ProdutoComVariantes";
 import { ProdutoGallery } from "@/components/produto/ProdutoGallery";
 import { getProdutoBySlug } from "@/lib/data";
+import { buildMetadata } from "@/lib/seo/metadata";
+import { breadcrumbNode, productNode, storeNode } from "@/lib/seo/jsonld";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export const revalidate = 60;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const produto = await getProdutoBySlug(slug);
+  if (!produto) {
+    return { title: "Produto não encontrado" };
+  }
+
+  return buildMetadata({
+    title: produto.nome,
+    description:
+      produto.descricao ??
+      `${produto.nome}${produto.marca ? ` ${produto.marca.nome}` : ""}. Orçamento rápido por WhatsApp na Natalmaq, Natal/RN.`,
+    path: `/produto/${produto.slug}`,
+    image: produto.imagens?.[0],
+    type: "website",
+  });
+}
 
 export default async function ProdutoPage({
   params,
@@ -17,8 +43,22 @@ export default async function ProdutoPage({
   const produto = await getProdutoBySlug(slug);
   if (!produto) notFound();
 
+  const jsonLd = [
+    productNode(produto),
+    breadcrumbNode([
+      { name: "Início", path: "/" },
+      { name: "Catálogo", path: "/catalogo" },
+      ...(produto.marca
+        ? [{ name: produto.marca.nome, path: `/marca/${produto.marca.slug}` }]
+        : []),
+      { name: produto.codigo, path: `/produto/${produto.slug}` },
+    ]),
+    storeNode(),
+  ];
+
   return (
     <div className="bg-bone">
+      <JsonLd data={jsonLd} />
       {/* Breadcrumb */}
       <div className="border-b border-line bg-white">
         <div className="mx-auto max-w-[1280px] px-6 py-4 font-mono text-[11px] uppercase tracking-mono text-ink-2">
