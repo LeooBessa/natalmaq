@@ -32,7 +32,7 @@ export default async function MinhaContaPage() {
       .maybeSingle(),
     sb
       .from("pedidos")
-      .select("id, numero, total, status, criado_em, prazo_entrega_data")
+      .select("id, numero, total, status, criado_em, prazo_entrega_data, tipo_entrega")
       .eq("cliente_id", user.id)
       .order("criado_em", { ascending: false })
       .limit(30),
@@ -148,11 +148,16 @@ export default async function MinhaContaPage() {
                         </span>
                         {p.prazo_entrega_data && (
                           <span className="inline-block rounded bg-ok/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-mono text-ok">
-                            ENTREGA{" "}
+                            {p.tipo_entrega === "retirada" ? "RETIRADA EM" : "ENTREGA PREVISTA PARA"}{" "}
                             {new Date(p.prazo_entrega_data + "T00:00:00").toLocaleDateString("pt-BR", {
                               day: "2-digit",
                               month: "2-digit",
                             })}
+                          </span>
+                        )}
+                        {p.tipo_entrega === "retirada" && !p.prazo_entrega_data && (
+                          <span className="inline-block rounded bg-bone-2 px-2 py-0.5 font-mono text-[10px] uppercase tracking-mono text-ink-2">
+                            🏪 RETIRADA NA LOJA
                           </span>
                         )}
                       </div>

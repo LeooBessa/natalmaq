@@ -19,7 +19,8 @@ def _format_brl(v: float) -> str:
 
 
 def _build_message(pedido_numero: int, cliente_nome: str, cliente_telefone: str,
-                   endereco: dict, itens_detalhados: list[dict],
+                   tipo_entrega: str, endereco: dict | None,
+                   itens_detalhados: list[dict],
                    subtotal: float, desconto_valor: float, cupom_codigo: str | None,
                    frete_valor: float, total: float,
                    observacoes: str | None) -> str:
@@ -29,11 +30,15 @@ def _build_message(pedido_numero: int, cliente_nome: str, cliente_telefone: str,
     lines.append("")
     lines.append(f"*Cliente:* {cliente_nome}")
     lines.append(f"*Telefone:* {cliente_telefone}")
-    if endereco:
+    if tipo_entrega == "retirada":
+        lines.append("*Modalidade:* 🏪 Retirada na loja")
+        lines.append("           R. Pres. Sarmento, 545 — Alecrim, Natal/RN")
+    elif endereco:
         rua = ", ".join([p for p in [endereco.get("rua"), endereco.get("numero")] if p])
         l2 = " — ".join(
             [p for p in [endereco.get("bairro"), f"{endereco.get('cidade','')}/{endereco.get('uf','')}", endereco.get("cep")] if p]
         )
+        lines.append("*Modalidade:* 🚚 Entrega")
         lines.append(f"*Endereço:* {rua}")
         if l2:
             lines.append(f"           {l2}")
@@ -49,7 +54,10 @@ def _build_message(pedido_numero: int, cliente_nome: str, cliente_telefone: str,
     if desconto_valor > 0:
         label = f"Cupom ({cupom_codigo})" if cupom_codigo else "Desconto"
         lines.append(f"{label}: -{_format_brl(desconto_valor)}")
-    lines.append(f"Frete:    {_format_brl(frete_valor)}")
+    if tipo_entrega == "retirada":
+        lines.append("Frete:    Retirada na loja (sem frete)")
+    else:
+        lines.append(f"Frete:    {_format_brl(frete_valor)}")
     lines.append(f"*TOTAL:   {_format_brl(total)}*")
     if observacoes:
         lines.append("")
@@ -123,7 +131,18 @@ async def criar_pedido(payload: PedidoIn) -> PedidoCriado:
                         desconto_valor = min(float(c["valor"]), subtotal)
                     cupom_codigo_validado = c["codigo"]
 
-    total = round(subtotal - desconto_valor + payload.frete_valor, 2)
+    # Retirada na loja zera o frete e ignora endereco do cliente.
+    is_retirada = payload.tipo_entrega == "retirada"
+    if is_retirada:
+        frete_efetivo = 0.0
+        endereco_persist = None
+    else:
+        if payload.endereco is None:
+            raise HTTPException(status_code=400, detail="Endereço obrigatório para entrega")
+        frete_efetivo = payload.frete_valor
+        endereco_persist = payload.endereco.model_dump()
+
+    total = round(subtotal - desconto_valor + frete_efetivo, 2)
 
     # 2) Cria o pedido
     novo = (
@@ -132,9 +151,10 @@ async def criar_pedido(payload: PedidoIn) -> PedidoCriado:
             "cliente_nome": payload.cliente_nome,
             "cliente_telefone": payload.cliente_telefone,
             "cliente_email": payload.cliente_email,
-            "endereco": payload.endereco.model_dump(),
+            "tipo_entrega": payload.tipo_entrega,
+            "endereco": endereco_persist,
             "subtotal": subtotal,
-            "frete_valor": payload.frete_valor,
+            "frete_valor": frete_efetivo,
             "desconto_valor": desconto_valor,
             "cupom_codigo": cupom_codigo_validado,
             "total": total,
@@ -163,12 +183,13 @@ async def criar_pedido(payload: PedidoIn) -> PedidoCriado:
         pedido_numero=pedido_numero,
         cliente_nome=payload.cliente_nome,
         cliente_telefone=payload.cliente_telefone,
-        endereco=payload.endereco.model_dump(),
+        tipo_entrega=payload.tipo_entrega,
+        endereco=endereco_persist,
         itens_detalhados=itens_detalhados,
         subtotal=subtotal,
         desconto_valor=desconto_valor,
         cupom_codigo=cupom_codigo_validado,
-        frete_valor=payload.frete_valor,
+        frete_valor=frete_efetivo,
         total=total,
         observacoes=payload.observacoes,
     )

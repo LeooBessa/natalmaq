@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -32,10 +32,11 @@ class PedidoIn(BaseModel):
     cliente_nome: str = Field(min_length=2, max_length=120)
     cliente_telefone: str = Field(min_length=10, max_length=20)
     cliente_email: EmailStr | None = None
-    endereco: EnderecoIn
+    tipo_entrega: Literal["entrega", "retirada"] = "entrega"
+    endereco: EnderecoIn | None = None
     observacoes: str | None = Field(default=None, max_length=2000)
     itens: list[ItemPedidoIn] = Field(min_length=1, max_length=100)
-    frete_valor: float = Field(ge=0)
+    frete_valor: float = Field(default=0, ge=0)
     cupom_codigo: str | None = None
     desconto_valor: float = Field(default=0, ge=0)
     cliente_id: str | None = None

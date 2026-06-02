@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useState, useEffect, useTransition } from "react";
+import { Truck, Store } from "lucide-react";
 
 import { api } from "@/lib/api-client";
 import { useCart } from "@/lib/cart-store";
 import { formatBRL, formatCEP, formatPhone, onlyDigits } from "@/lib/format";
-import type { Endereco, FreteCalculado } from "@/types";
+import { LOJA_ENDERECO, LOJA_HORARIO } from "@/lib/loja";
+import type { Endereco, FreteCalculado, TipoEntrega } from "@/types";
 import { validarCupomAction } from "./actions";
 
 type ClienteBasico = {
@@ -24,6 +26,7 @@ type Props = {
 export function CheckoutForm({ userId, cliente }: Props) {
   const { itens, subtotal, pesoTotal, clear, cupom, aplicarCupom, removerCupom } = useCart();
 
+  const [tipoEntrega, setTipoEntrega] = useState<TipoEntrega>("entrega");
   const [form, setForm] = useState({
     cliente_nome: cliente?.nome ?? "",
     cliente_telefone: cliente?.contato ? formatPhone(cliente.contato) : "",
@@ -119,13 +122,15 @@ export function CheckoutForm({ userId, cliente }: Props) {
       setErro("Preencha nome e telefone.");
       return;
     }
-    if (!frete) {
-      setErro("Calcule o frete antes de finalizar.");
-      return;
-    }
-    if (!form.cep || !form.rua || !form.numero || !form.bairro || !form.cidade || !form.uf) {
-      setErro("Preencha o endereço completo.");
-      return;
+    if (tipoEntrega === "entrega") {
+      if (!frete) {
+        setErro("Calcule o frete antes de finalizar.");
+        return;
+      }
+      if (!form.cep || !form.rua || !form.numero || !form.bairro || !form.cidade || !form.uf) {
+        setErro("Preencha o endereço completo.");
+        return;
+      }
     }
 
     setSubmit(true);
@@ -134,21 +139,24 @@ export function CheckoutForm({ userId, cliente }: Props) {
         cliente_nome: form.cliente_nome,
         cliente_telefone: onlyDigits(form.cliente_telefone),
         cliente_email: form.cliente_email || undefined,
-        endereco: {
-          cep: onlyDigits(form.cep),
-          rua: form.rua,
-          numero: form.numero,
-          bairro: form.bairro,
-          cidade: form.cidade,
-          uf: form.uf.toUpperCase(),
-          complemento: form.complemento || undefined,
-        },
+        tipo_entrega: tipoEntrega,
+        endereco: tipoEntrega === "entrega"
+          ? {
+              cep: onlyDigits(form.cep),
+              rua: form.rua,
+              numero: form.numero,
+              bairro: form.bairro,
+              cidade: form.cidade,
+              uf: form.uf.toUpperCase(),
+              complemento: form.complemento || undefined,
+            }
+          : null,
         observacoes: form.observacoes || undefined,
         itens: itens.map((i) => ({
           produto_id: i.produto_id,
           quantidade: i.quantidade,
         })),
-        frete_valor: frete.valor,
+        frete_valor: tipoEntrega === "retirada" ? 0 : (frete?.valor ?? 0),
         cupom_codigo: cupom?.codigo,
         desconto_valor: cupom?.desconto,
         cliente_id: userId,
@@ -163,7 +171,9 @@ export function CheckoutForm({ userId, cliente }: Props) {
   }
 
   const desconto = cupom?.desconto ?? 0;
-  const total = subtotal() - desconto + (frete?.valor ?? 0);
+  const freteValor = tipoEntrega === "retirada" ? 0 : (frete?.valor ?? 0);
+  const total = subtotal() - desconto + freteValor;
+  const podeEnviar = tipoEntrega === "retirada" || !!frete;
 
   return (
     <div className="bg-bone">
@@ -198,6 +208,55 @@ export function CheckoutForm({ userId, cliente }: Props) {
             </div>
           )}
 
+          {/* Seletor: Entrega ou Retirada */}
+          <section className="border border-line bg-white p-6">
+            <h2 className="mb-4 font-mono text-[11px] font-bold uppercase tracking-mono text-ink">
+              COMO QUER RECEBER
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setTipoEntrega("entrega")}
+                aria-pressed={tipoEntrega === "entrega"}
+                className={`flex items-start gap-3 border-2 p-4 text-left transition ${
+                  tipoEntrega === "entrega"
+                    ? "border-navy bg-bone"
+                    : "border-line bg-white hover:border-ink-2"
+                }`}
+              >
+                <Truck className={`mt-0.5 h-5 w-5 shrink-0 ${tipoEntrega === "entrega" ? "text-navy" : "text-ink-2"}`} />
+                <div>
+                  <div className="font-mono text-[12px] font-bold uppercase tracking-mono text-ink">
+                    Entrega
+                  </div>
+                  <div className="mt-0.5 text-xs text-ink-2">
+                    Frota própria para Natal e região
+                  </div>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTipoEntrega("retirada")}
+                aria-pressed={tipoEntrega === "retirada"}
+                className={`flex items-start gap-3 border-2 p-4 text-left transition ${
+                  tipoEntrega === "retirada"
+                    ? "border-navy bg-bone"
+                    : "border-line bg-white hover:border-ink-2"
+                }`}
+              >
+                <Store className={`mt-0.5 h-5 w-5 shrink-0 ${tipoEntrega === "retirada" ? "text-navy" : "text-ink-2"}`} />
+                <div>
+                  <div className="font-mono text-[12px] font-bold uppercase tracking-mono text-ink">
+                    Retirar na loja
+                  </div>
+                  <div className="mt-0.5 text-xs text-ink-2">
+                    Sem frete · {LOJA_HORARIO}
+                  </div>
+                </div>
+              </button>
+            </div>
+          </section>
+
           <section className="border border-line bg-white p-6">
             <h2 className="mb-4 font-mono text-[11px] font-bold uppercase tracking-mono text-ink">
               SEUS DADOS
@@ -231,55 +290,81 @@ export function CheckoutForm({ userId, cliente }: Props) {
             </div>
           </section>
 
-          <section className="border border-line bg-white p-6">
-            <h2 className="mb-4 font-mono text-[11px] font-bold uppercase tracking-mono text-ink">
-              ENDEREÇO DE ENTREGA
-            </h2>
-            <div className="grid gap-3 md:grid-cols-3">
-              <Field label="CEP *">
-                <div className="flex gap-2">
+          {tipoEntrega === "entrega" ? (
+            <section className="border border-line bg-white p-6">
+              <h2 className="mb-4 font-mono text-[11px] font-bold uppercase tracking-mono text-ink">
+                ENDEREÇO DE ENTREGA
+              </h2>
+              <div className="grid gap-3 md:grid-cols-3">
+                <Field label="CEP *">
+                  <div className="flex gap-2">
+                    <input
+                      value={form.cep}
+                      onChange={(e) => update("cep", formatCEP(e.target.value))}
+                      placeholder="59000-000"
+                      className={inputCls}
+                    />
+                    <button
+                      type="button"
+                      onClick={calcularFrete}
+                      disabled={calcLoading}
+                      className="bg-navy px-4 font-mono text-[11px] font-bold uppercase tracking-mono text-white hover:bg-navy-800 disabled:opacity-50"
+                    >
+                      {calcLoading ? "..." : "Calcular"}
+                    </button>
+                  </div>
+                </Field>
+                <Field label="Rua *" className="md:col-span-2">
+                  <input value={form.rua} onChange={(e) => update("rua", e.target.value)} placeholder="Nome da rua" className={inputCls} />
+                </Field>
+                <Field label="Número *">
+                  <input value={form.numero} onChange={(e) => update("numero", e.target.value)} placeholder="Nº" className={inputCls} />
+                </Field>
+                <Field label="Bairro *">
+                  <input value={form.bairro} onChange={(e) => update("bairro", e.target.value)} placeholder="Bairro" className={inputCls} />
+                </Field>
+                <Field label="Complemento">
+                  <input value={form.complemento} onChange={(e) => update("complemento", e.target.value)} placeholder="Apto, bloco..." className={inputCls} />
+                </Field>
+                <Field label="Cidade *" className="md:col-span-2">
+                  <input value={form.cidade} onChange={(e) => update("cidade", e.target.value)} placeholder="Cidade" className={inputCls} />
+                </Field>
+                <Field label="UF *">
                   <input
-                    value={form.cep}
-                    onChange={(e) => update("cep", formatCEP(e.target.value))}
-                    placeholder="59000-000"
+                    value={form.uf}
+                    maxLength={2}
+                    onChange={(e) => update("uf", e.target.value.toUpperCase().slice(0, 2))}
+                    placeholder="RN"
                     className={inputCls}
                   />
-                  <button
-                    type="button"
-                    onClick={calcularFrete}
-                    disabled={calcLoading}
-                    className="bg-navy px-4 font-mono text-[11px] font-bold uppercase tracking-mono text-white hover:bg-navy-800 disabled:opacity-50"
-                  >
-                    {calcLoading ? "..." : "Calcular"}
-                  </button>
+                </Field>
+              </div>
+            </section>
+          ) : (
+            <section className="border border-line bg-white p-6">
+              <h2 className="mb-4 font-mono text-[11px] font-bold uppercase tracking-mono text-ink">
+                LOCAL DE RETIRADA
+              </h2>
+              <div className="flex items-start gap-3 rounded border border-ok/30 bg-ok/5 p-4">
+                <Store className="mt-0.5 h-5 w-5 shrink-0 text-ok" />
+                <div className="text-sm">
+                  <p className="font-semibold text-ink">Loja Natalmaq</p>
+                  <p className="mt-0.5 text-ink-2">
+                    {LOJA_ENDERECO.rua} — {LOJA_ENDERECO.bairro}
+                  </p>
+                  <p className="text-ink-2">
+                    {LOJA_ENDERECO.cidade}/{LOJA_ENDERECO.uf} · CEP {LOJA_ENDERECO.cep}
+                  </p>
+                  <p className="mt-2 font-mono text-[11px] uppercase tracking-mono text-ink-2">
+                    Horário: {LOJA_HORARIO}
+                  </p>
+                  <p className="mt-2 text-[12px] text-ink-2">
+                    Confirmaremos o dia exato pra retirada após a aprovação do orçamento.
+                  </p>
                 </div>
-              </Field>
-              <Field label="Rua *" className="md:col-span-2">
-                <input value={form.rua} onChange={(e) => update("rua", e.target.value)} placeholder="Nome da rua" className={inputCls} />
-              </Field>
-              <Field label="Número *">
-                <input value={form.numero} onChange={(e) => update("numero", e.target.value)} placeholder="Nº" className={inputCls} />
-              </Field>
-              <Field label="Bairro *">
-                <input value={form.bairro} onChange={(e) => update("bairro", e.target.value)} placeholder="Bairro" className={inputCls} />
-              </Field>
-              <Field label="Complemento">
-                <input value={form.complemento} onChange={(e) => update("complemento", e.target.value)} placeholder="Apto, bloco..." className={inputCls} />
-              </Field>
-              <Field label="Cidade *" className="md:col-span-2">
-                <input value={form.cidade} onChange={(e) => update("cidade", e.target.value)} placeholder="Cidade" className={inputCls} />
-              </Field>
-              <Field label="UF *">
-                <input
-                  value={form.uf}
-                  maxLength={2}
-                  onChange={(e) => update("uf", e.target.value.toUpperCase().slice(0, 2))}
-                  placeholder="RN"
-                  className={inputCls}
-                />
-              </Field>
-            </div>
-          </section>
+              </div>
+            </section>
+          )}
 
           <section className="border border-line bg-white p-6">
             <h2 className="mb-4 font-mono text-[11px] font-bold uppercase tracking-mono text-ink">
@@ -362,10 +447,14 @@ export function CheckoutForm({ userId, cliente }: Props) {
             </div>
           )}
 
-          <Row
-            label="Frete"
-            value={frete ? `${formatBRL(frete.valor)} · ${frete.prazo_dias} dia(s)` : "—"}
-          />
+          {tipoEntrega === "entrega" ? (
+            <Row
+              label="Frete"
+              value={frete ? `${formatBRL(frete.valor)} · ${frete.prazo_dias} dia(s)` : "—"}
+            />
+          ) : (
+            <Row label="Retirada na loja" value="Sem frete" />
+          )}
 
           <div className="mt-2 flex items-end justify-between border-t border-white/15 pt-3">
             <div className="font-mono text-[11px] uppercase tracking-mono text-white/70">TOTAL</div>
@@ -381,7 +470,7 @@ export function CheckoutForm({ userId, cliente }: Props) {
           <button
             type="button"
             onClick={finalizar}
-            disabled={submit || !frete}
+            disabled={submit || !podeEnviar}
             className="block w-full bg-brand-500 py-4 font-mono text-[12px] font-bold uppercase tracking-mono text-white transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {submit ? "Enviando..." : "Finalizar via WhatsApp →"}

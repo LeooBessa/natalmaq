@@ -33,7 +33,7 @@ export default async function PedidoDetalhePage({
     .select(
       `id, numero, criado_em, status, total, subtotal, frete_valor,
        desconto_valor, cupom_codigo, observacoes, whatsapp_url, endereco,
-       forma_pagamento, prazo_entrega_data, prazo_entrega_obs,
+       forma_pagamento, prazo_entrega_data, prazo_entrega_obs, tipo_entrega,
        pedido_itens(id, nome_snapshot, codigo, quantidade, preco_unit, preco_total, disponivel)`,
     )
     .eq("id", id)
@@ -168,7 +168,7 @@ export default async function PedidoDetalhePage({
           {pedido.prazo_entrega_data && (
             <section className="border border-ok/40 bg-ok/5 p-4">
               <div className="mb-1 font-mono text-[10px] font-bold uppercase tracking-mono text-ok">
-                ENTREGA PREVISTA
+                {pedido.tipo_entrega === "retirada" ? "PRONTO PARA RETIRADA EM" : "ENTREGA PREVISTA"}
               </div>
               <p className="text-base font-semibold text-ink">
                 {new Date(pedido.prazo_entrega_data + "T00:00:00").toLocaleDateString("pt-BR", {
@@ -184,7 +184,19 @@ export default async function PedidoDetalhePage({
             </section>
           )}
 
-          {endereco && (
+          {pedido.tipo_entrega === "retirada" ? (
+            <section className="border border-line bg-white p-4">
+              <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-mono text-ink-2">
+                🏪 RETIRADA NA LOJA
+              </div>
+              <p className="text-sm font-semibold text-ink">Loja Natalmaq</p>
+              <p className="text-sm text-ink-2">R. Pres. Sarmento, 545 — Alecrim</p>
+              <p className="text-sm text-ink-2">Natal/RN · CEP 59037-400</p>
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-mono text-ink-2">
+                Seg-Sex 7h-18h · Sáb 7h-12h
+              </p>
+            </section>
+          ) : endereco && (
             <section className="border border-line bg-white p-4">
               <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-mono text-ink-2">
                 ENDEREÇO DE ENTREGA

@@ -99,11 +99,14 @@ export type Cliente = {
   criado_em: string;
 };
 
+export type TipoEntrega = "entrega" | "retirada";
+
 export type PedidoInput = {
   cliente_nome: string;
   cliente_telefone: string;
   cliente_email?: string;
-  endereco: Endereco;
+  tipo_entrega: TipoEntrega;
+  endereco?: Endereco | null;
   observacoes?: string;
   itens: { produto_id: string; quantidade: number }[];
   frete_valor: number;

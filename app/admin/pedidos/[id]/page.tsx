@@ -23,7 +23,7 @@ export default async function PedidoDetalhePage({
   const { data: pedido } = await sb
     .from("pedidos")
     .select(
-      "id, numero, status, cliente_nome, cliente_telefone, cliente_email, endereco, subtotal, desconto, frete_valor, total, observacoes, whatsapp_url, criado_em, atualizado_em, aprovado_em, confirmado_em, enviado_em, recusado_em, prazo_entrega_data, prazo_entrega_obs",
+      "id, numero, status, cliente_nome, cliente_telefone, cliente_email, endereco, subtotal, desconto, frete_valor, total, observacoes, whatsapp_url, criado_em, atualizado_em, aprovado_em, confirmado_em, enviado_em, recusado_em, prazo_entrega_data, prazo_entrega_obs, tipo_entrega",
     )
     .eq("id", id)
     .maybeSingle();
@@ -170,9 +170,23 @@ export default async function PedidoDetalhePage({
             </div>
           </div>
 
-          {pedido.endereco && (
+          {pedido.tipo_entrega === "retirada" ? (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-5">
+              <h2 className="mb-2 flex items-center gap-2 font-semibold text-green-700">
+                🏪 Retirada na loja
+              </h2>
+              <p className="text-sm text-zinc-700">
+                R. Pres. Sarmento, 545 — Alecrim
+                <br />
+                Natal/RN · CEP 59037-400
+              </p>
+              <p className="mt-2 font-mono text-[11px] uppercase tracking-wide text-zinc-500">
+                Cliente vai retirar pessoalmente
+              </p>
+            </div>
+          ) : pedido.endereco && (
             <div className="rounded-lg border border-zinc-200 bg-white p-5">
-              <h2 className="mb-3 font-semibold">Endereço</h2>
+              <h2 className="mb-3 font-semibold">Endereço de entrega</h2>
               <p className="text-sm text-zinc-700">
                 {pedido.endereco.rua}, {pedido.endereco.numero}
                 {pedido.endereco.complemento
