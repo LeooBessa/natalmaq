@@ -30,6 +30,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
   }
 
   const banner = banners[idx];
+  const isArtigo = banner.link?.startsWith("/artigos/") ?? false;
   const Wrap = banner.link ? Link : "div";
 
   return (
@@ -46,9 +47,27 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
 
       <Wrap
         href={(banner.link ?? "/catalogo") as never}
-        className="relative block h-[420px] w-full md:h-[520px]"
+        className="group relative block h-[420px] w-full md:h-[520px]"
         aria-label={banner.titulo ?? "Banner"}
-      />
+      >
+        {isArtigo && (
+          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-navy/90 via-navy/40 to-transparent">
+            <div className="mx-auto w-full max-w-[1280px] px-6 pb-14 md:pb-20">
+              <span className="mb-3 inline-block w-fit border border-brand-500/50 bg-navy/40 px-3 py-1 font-mono text-[10px] uppercase tracking-mono text-brand-400 backdrop-blur-sm">
+                Artigo
+              </span>
+              {banner.titulo && (
+                <h2 className="max-w-[680px] font-display text-2xl leading-tight tracking-tight text-white md:text-4xl">
+                  {banner.titulo}
+                </h2>
+              )}
+              <span className="mt-5 inline-flex w-fit items-center gap-2 bg-brand-500 px-6 py-3 font-mono text-[11px] font-bold uppercase tracking-mono text-white transition-all duration-300 group-hover:gap-3 md:text-[13px]">
+                Ler artigo →
+              </span>
+            </div>
+          </div>
+        )}
+      </Wrap>
 
       {banners.length > 1 && (
         <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2">
