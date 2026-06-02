@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
 
 import { getArtigo, listArtigos } from "@/lib/conteudo";
-import { getProdutoBySlug } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo/metadata";
 import {
   articleNode,
@@ -14,15 +13,8 @@ import {
   storeNode,
 } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { LinkedText } from "@/components/seo/LinkedText";
 import { RelatedSection } from "@/components/seo/RelatedSection";
 import type { LeiaTambemArticle } from "@/components/seo/LeiaTambem";
-import {
-  buildDictionary,
-  buildInternalLinks,
-  type InlineLink,
-} from "@/lib/seo/internal-links";
-import type { ProdutoComMarca } from "@/types";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -62,66 +54,13 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound();
   }
 
-  // ---------------------------------------------------------------------------
-  // Linkagem interna (render-time, cacheada — NÃO materializa no banco aqui).
-  //
-  // A persistência em artigos.links_inline/relacionados é Fase 3 (no save do
-  // admin, via buildInternalLinksFull + persistLinks). Aqui rodamos o motor em
-  // tempo de render: buildDictionary() é cacheado por request (React cache) e
-  // buildInternalLinks é síncrono/puro. Usamos a variante síncrona (leiaTambem/
-  // pillar vêm vazios dela) e completamos o "Leia também" abaixo, best-effort.
-  // Tudo é tolerante a falha: se algo der erro, o bloco é simplesmente omitido
-  // e o artigo continua renderizando idêntico ao de hoje.
-  // ---------------------------------------------------------------------------
-  const dict = await buildDictionary();
-  const result = buildInternalLinks(
-    {
-      slug: article.slug,
-      titulo: article.title,
-      keywords: article.keywords ?? [],
-      cluster: article.cluster,
-      content: article.content,
-    },
-    dict,
-  );
+  // Linkagem interna automática (links inline no corpo + chips de produto/
+  // categoria) foi DESATIVADA: ligava termos genéricos a categorias (ex.: a
+  // palavra "guia"/"contra" -> /catalogo?categoria=...), o que é baixa qualidade
+  // para SEO/UX. Mantemos apenas o "Leia também" (artigo→artigo + pillar do
+  // cluster), que é o sinal de linkagem interna que realmente agrega.
 
-  // Índice de InlineLink por blockIndex|itemIndex p/ o render passar a cada
-  // <LinkedText> SÓ os links daquele bloco/item (chave "b" ou "b:it").
-  const linksByBlock = new Map<string, InlineLink[]>();
-  for (const l of result.inline) {
-    const key = l.itemIndex === undefined ? `${l.blockIndex}` : `${l.blockIndex}:${l.itemIndex}`;
-    const arr = linksByBlock.get(key);
-    if (arr) arr.push(l);
-    else linksByBlock.set(key, [l]);
-  }
-  const linksFor = (blockIndex: number, itemIndex?: number): InlineLink[] =>
-    linksByBlock.get(
-      itemIndex === undefined ? `${blockIndex}` : `${blockIndex}:${itemIndex}`,
-    ) ?? [];
-
-  // Resolve o RelatedBundle (LinkTarget[]) em dados renderizáveis. Produtos
-  // viram ProdutoComMarca (lib/data por slug) p/ alimentar o ProductCard;
-  // categorias/marcas já têm nome+href (chips). leiaTambem é resolvido em
-  // LeiaTambemArticle via os artigos já carregados (listArtigos). Best-effort:
-  // qualquer falha vira lista vazia e o sub-bloco se omite sozinho.
-  let produtosRelacionados: ProdutoComMarca[] = [];
-  try {
-    const resolvidos = await Promise.all(
-      result.related.produtos.map((t) =>
-        getProdutoBySlug(t.slug).catch(() => null),
-      ),
-    );
-    // getProdutoBySlug devolve ProdutoComMarca + variantes/complementares; o
-    // RelatedProducts só precisa de ProdutoComMarca (supertipo), então filtramos
-    // os nulos e estreitamos para o tipo que o ProductCard consome.
-    produtosRelacionados = resolvidos.filter(
-      (p): p is NonNullable<typeof p> => p !== null,
-    );
-  } catch {
-    produtosRelacionados = [];
-  }
-
-  // leiaTambem: a variante síncrona do motor devolve [] aqui; resolvemos via os
+  // leiaTambem: resolvemos via os
   // artigos já listados (mesmo cluster primeiro), excluindo o próprio. Mantém
   // custo zero (uma leitura cacheada de listArtigos) e nunca quebra.
   let leiaTambem: LeiaTambemArticle[] = [];
@@ -217,9 +156,7 @@ export default async function ArticlePage({ params }: PageProps) {
                     className="flex gap-3 text-lg leading-relaxed text-ink/80 md:text-xl"
                   >
                     <span className="mt-2.5 h-2 w-2 flex-shrink-0 rounded-full bg-brand-500" />
-                    <span>
-                      <LinkedText text={item} links={linksFor(i, j)} />
-                    </span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -227,7 +164,7 @@ export default async function ArticlePage({ params }: PageProps) {
           }
           return (
             <p key={i} className="mb-5 text-lg leading-relaxed text-ink/80 md:text-xl">
-              <LinkedText text={block.text} links={linksFor(i)} />
+              {block.text}
             </p>
           );
         })}
@@ -282,13 +219,7 @@ export default async function ArticlePage({ params }: PageProps) {
         {/* Relacionados (produtos -> categorias/marcas -> leia também).
             Render-time, best-effort: cada sub-bloco se omite se vier vazio. */}
         <div className="mt-14">
-          <RelatedSection
-            produtos={produtosRelacionados}
-            categorias={result.related.categorias}
-            marcas={result.related.marcas}
-            leiaTambem={leiaTambem}
-            pillar={result.related.pillar}
-          />
+          <RelatedSection leiaTambem={leiaTambem} />
         </div>
 
         <div className="mt-12 border-t border-line pt-8">
