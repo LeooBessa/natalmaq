@@ -10,7 +10,7 @@
 import { useActionState, useMemo, useState, useTransition } from "react";
 
 import type { ArticleBlock } from "@/lib/articles";
-import { uploadParaBucket } from "@/app/admin/_lib/upload";
+import { uploadDireto } from "@/lib/supabase/upload-client";
 import { buildWaLinkLoja } from "@/lib/whatsapp";
 import { BlocksEditor } from "../../_components/BlocksEditor";
 import { FaqRepeater, type FaqItem } from "../../_components/FaqRepeater";
@@ -494,9 +494,7 @@ function HeroUpload({
     setError(null);
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const r = await uploadParaBucket("conteudo", fd);
+      const r = await uploadDireto("conteudo", file);
       if (r.error) setError(r.error);
       else if (r.url) onChange(r.url);
     } finally {

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 
-import { uploadParaBucket } from "../_lib/upload";
+import { uploadDireto } from "@/lib/supabase/upload-client";
 import { deleteBannerAction, saveBannerAction } from "./actions";
 
 type Banner = {
@@ -54,9 +54,7 @@ export function BannersManager({ banners }: { banners: Banner[] }) {
     const f = e.target.files?.[0];
     if (!f) return;
     setUploading(true);
-    const fd = new FormData();
-    fd.append("file", f);
-    const r = await uploadParaBucket("marketing", fd);
+    const r = await uploadDireto("marketing", f);
     setUploading(false);
     e.target.value = "";
     if (r.error) setErro(r.error);

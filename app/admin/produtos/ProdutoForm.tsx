@@ -6,8 +6,8 @@ import {
   createProdutoAction,
   deleteProdutoAction,
   updateProdutoAction,
-  uploadImagemAction,
 } from "./actions";
+import { uploadDireto } from "@/lib/supabase/upload-client";
 
 type Marca = { id: string; nome: string };
 type Categoria = { id: string; nome: string };
@@ -61,9 +61,7 @@ export function ProdutoForm({
     setUploadError(null);
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const r = await uploadImagemAction(fd);
+      const r = await uploadDireto("produtos", file);
       if (r.error) setUploadError(r.error);
       else if (r.url) setImagens((arr) => [...arr, r.url!]);
     } finally {

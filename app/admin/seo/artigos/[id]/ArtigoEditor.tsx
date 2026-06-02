@@ -51,12 +51,12 @@ import {
 } from "@/app/admin/seo/_lib/reading-time";
 import { exportBrief } from "@/app/admin/seo/_lib/export-brief";
 import { SEO_LIMITS } from "@/lib/seo/metadata";
+import { uploadDireto } from "@/lib/supabase/upload-client";
 
 import {
   deleteArtigoAction,
   setStatusArtigoAction,
   sugerirLinksAction,
-  uploadCapaAction,
   updateArtigoAction,
 } from "../actions";
 
@@ -193,16 +193,14 @@ export function ArtigoEditor({
     if (slugLocked) setSlug(slugify(titulo));
   }, [titulo, slugLocked]);
 
-  // --- Upload da capa -------------------------------------------------------
+  // --- Upload da capa (direto navegador -> Supabase; ver upload-client) -----
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadError(null);
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const r = await uploadCapaAction(fd);
+      const r = await uploadDireto("conteudo", file);
       if (r.error) setUploadError(r.error);
       else if (r.url) setImagem(r.url);
     } finally {
