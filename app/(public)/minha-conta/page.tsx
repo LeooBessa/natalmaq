@@ -32,7 +32,7 @@ export default async function MinhaContaPage() {
       .maybeSingle(),
     sb
       .from("pedidos")
-      .select("id, numero, total, status, criado_em")
+      .select("id, numero, total, status, criado_em, prazo_entrega_data")
       .eq("cliente_id", user.id)
       .order("criado_em", { ascending: false })
       .limit(30),
@@ -140,11 +140,22 @@ export default async function MinhaContaPage() {
                           year: "numeric",
                         })}
                       </div>
-                      <span
-                        className={`mt-1.5 inline-block rounded px-2 py-0.5 font-mono text-[10px] uppercase tracking-mono ${s.cls}`}
-                      >
-                        {s.label}
-                      </span>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={`inline-block rounded px-2 py-0.5 font-mono text-[10px] uppercase tracking-mono ${s.cls}`}
+                        >
+                          {s.label}
+                        </span>
+                        {p.prazo_entrega_data && (
+                          <span className="inline-block rounded bg-ok/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-mono text-ok">
+                            ENTREGA{" "}
+                            {new Date(p.prazo_entrega_data + "T00:00:00").toLocaleDateString("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                            })}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="font-display text-[20px] tracking-tight text-ink">

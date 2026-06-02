@@ -24,6 +24,8 @@ export async function updateStatusAction(
   revalidatePath("/admin/pedidos");
   revalidatePath(`/admin/pedidos/${pedidoId}`);
   revalidatePath("/admin/dashboard");
+  revalidatePath("/minha-conta");
+  revalidatePath(`/minha-conta/pedido/${pedidoId}`);
   return { ok: true };
 }
 
@@ -32,6 +34,8 @@ export async function editarPedidoAction(
   data: {
     desconto: number;
     frete_valor: number;
+    prazo_entrega_data: string | null;
+    prazo_entrega_obs: string | null;
     itens: {
       id: string;
       disponivel: boolean;
@@ -85,6 +89,8 @@ export async function editarPedidoAction(
       frete_valor: data.frete_valor,
       subtotal,
       total,
+      prazo_entrega_data: data.prazo_entrega_data,
+      prazo_entrega_obs: data.prazo_entrega_obs,
     })
     .eq("id", pedidoId);
 
@@ -93,5 +99,7 @@ export async function editarPedidoAction(
   revalidatePath("/admin/pedidos");
   revalidatePath(`/admin/pedidos/${pedidoId}`);
   revalidatePath("/admin/dashboard");
+  revalidatePath("/minha-conta");
+  revalidatePath(`/minha-conta/pedido/${pedidoId}`);
   return { ok: true };
 }

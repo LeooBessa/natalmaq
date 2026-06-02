@@ -19,6 +19,8 @@ type Props = {
   itens: Item[];
   descontoGeralInicial: number;
   freteInicial: number;
+  prazoEntregaDataInicial: string | null;
+  prazoEntregaObsInicial: string | null;
 };
 
 function fmt(v: number) {
@@ -33,6 +35,8 @@ export function PedidoEditor({
   itens,
   descontoGeralInicial,
   freteInicial,
+  prazoEntregaDataInicial,
+  prazoEntregaObsInicial,
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
@@ -40,6 +44,8 @@ export function PedidoEditor({
 
   const [descontoGeral, setDescontoGeral] = useState(descontoGeralInicial.toFixed(2));
   const [frete, setFrete] = useState(freteInicial.toFixed(2));
+  const [prazoData, setPrazoData] = useState(prazoEntregaDataInicial ?? "");
+  const [prazoObs, setPrazoObs] = useState(prazoEntregaObsInicial ?? "");
 
   const [disponibilidade, setDisponibilidade] = useState<Record<string, boolean>>(
     Object.fromEntries(itens.map((i) => [i.id, i.disponivel])),
@@ -90,6 +96,8 @@ export function PedidoEditor({
       const r = await editarPedidoAction(pedidoId, {
         desconto: descontoGeralNum,
         frete_valor: freteNum,
+        prazo_entrega_data: prazoData || null,
+        prazo_entrega_obs: prazoObs.trim() || null,
         itens: itens.map((i) => ({
           id: i.id,
           disponivel: disponibilidade[i.id],
@@ -136,6 +144,41 @@ export function PedidoEditor({
             onChange={(e) => { setFrete(e.target.value); setSalvo(false); }}
             className={inputCls}
           />
+        </div>
+      </div>
+
+      {/* Prazo de entrega (aparece pro cliente em /minha-conta) */}
+      <div className="space-y-2 rounded-md border border-zinc-200 bg-zinc-50 p-3">
+        <p className="text-xs font-medium text-zinc-500">
+          Prazo de entrega <span className="font-normal text-zinc-400">(visível pro cliente)</span>
+        </p>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[180px_1fr]">
+          <div>
+            <label htmlFor="prazo-data" className="mb-1 block text-[11px] font-medium text-zinc-500">
+              Data prevista
+            </label>
+            <input
+              id="prazo-data"
+              type="date"
+              value={prazoData}
+              onChange={(e) => { setPrazoData(e.target.value); setSalvo(false); }}
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label htmlFor="prazo-obs" className="mb-1 block text-[11px] font-medium text-zinc-500">
+              Observação (opcional)
+            </label>
+            <input
+              id="prazo-obs"
+              type="text"
+              value={prazoObs}
+              onChange={(e) => { setPrazoObs(e.target.value); setSalvo(false); }}
+              placeholder='Ex: "saindo na quinta pela manhã"'
+              maxLength={120}
+              className={inputCls}
+            />
+          </div>
         </div>
       </div>
 

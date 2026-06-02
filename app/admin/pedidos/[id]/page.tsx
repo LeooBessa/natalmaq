@@ -23,7 +23,7 @@ export default async function PedidoDetalhePage({
   const { data: pedido } = await sb
     .from("pedidos")
     .select(
-      "id, numero, status, cliente_nome, cliente_telefone, cliente_email, endereco, subtotal, desconto, frete_valor, total, observacoes, whatsapp_url, criado_em, atualizado_em, aprovado_em, confirmado_em, enviado_em, recusado_em",
+      "id, numero, status, cliente_nome, cliente_telefone, cliente_email, endereco, subtotal, desconto, frete_valor, total, observacoes, whatsapp_url, criado_em, atualizado_em, aprovado_em, confirmado_em, enviado_em, recusado_em, prazo_entrega_data, prazo_entrega_obs",
     )
     .eq("id", id)
     .maybeSingle();
@@ -152,6 +152,8 @@ export default async function PedidoDetalhePage({
           itens={itensNorm}
           descontoGeralInicial={Number(pedido.desconto ?? 0)}
           freteInicial={Number(pedido.frete_valor)}
+          prazoEntregaDataInicial={pedido.prazo_entrega_data ?? null}
+          prazoEntregaObsInicial={pedido.prazo_entrega_obs ?? null}
         />
         </div>
 

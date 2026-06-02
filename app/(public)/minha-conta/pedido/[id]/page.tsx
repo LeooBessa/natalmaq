@@ -33,7 +33,7 @@ export default async function PedidoDetalhePage({
     .select(
       `id, numero, criado_em, status, total, subtotal, frete_valor,
        desconto_valor, cupom_codigo, observacoes, whatsapp_url, endereco,
-       forma_pagamento,
+       forma_pagamento, prazo_entrega_data, prazo_entrega_obs,
        pedido_itens(id, nome_snapshot, codigo, quantidade, preco_unit, preco_total, disponivel)`,
     )
     .eq("id", id)
@@ -164,6 +164,25 @@ export default async function PedidoDetalhePage({
               </div>
             </div>
           </aside>
+
+          {pedido.prazo_entrega_data && (
+            <section className="border border-ok/40 bg-ok/5 p-4">
+              <div className="mb-1 font-mono text-[10px] font-bold uppercase tracking-mono text-ok">
+                ENTREGA PREVISTA
+              </div>
+              <p className="text-base font-semibold text-ink">
+                {new Date(pedido.prazo_entrega_data + "T00:00:00").toLocaleDateString("pt-BR", {
+                  weekday: "long",
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+              {pedido.prazo_entrega_obs && (
+                <p className="mt-1 text-sm text-ink-2">{pedido.prazo_entrega_obs}</p>
+              )}
+            </section>
+          )}
 
           {endereco && (
             <section className="border border-line bg-white p-4">
