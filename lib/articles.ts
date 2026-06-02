@@ -14,8 +14,11 @@ export interface Article {
   title: string;
   excerpt: string;
   image: string;
-  date: string;
+  date: string;        // exibição em pt-BR (ex: "26 de maio de 2026")
+  isoDate: string;     // machine-readable p/ schema/metadata (ex: "2026-05-26")
   readingTime: string;
+  keywords?: string[];
+  author?: string;     // default "Equipe Natalmaq"
   content: ArticleBlock[];
 }
 
@@ -29,7 +32,16 @@ export const articles: Article[] = [
     image:
       "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=1600&q=80",
     date: "26 de maio de 2026",
+    isoDate: "2026-05-26",
     readingTime: "6 min de leitura",
+    keywords: [
+      "EPI",
+      "equipamento de proteção individual",
+      "segurança do trabalho",
+      "capacete",
+      "luva de segurança",
+      "Certificado de Aprovação",
+    ],
     content: [
       {
         type: "paragraph",
@@ -79,7 +91,15 @@ export const articles: Article[] = [
     image:
       "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1600&q=80",
     date: "22 de maio de 2026",
+    isoDate: "2026-05-22",
     readingTime: "5 min de leitura",
+    keywords: [
+      "manutenção de furadeira",
+      "parafusadeira",
+      "ferramenta elétrica",
+      "vida útil ferramenta",
+      "cuidados bateria",
+    ],
     content: [
       {
         type: "paragraph",
@@ -116,7 +136,15 @@ export const articles: Article[] = [
     image:
       "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=1600&q=80",
     date: "18 de maio de 2026",
+    isoDate: "2026-05-18",
     readingTime: "7 min de leitura",
+    keywords: [
+      "ferramentas essenciais",
+      "kit de ferramentas",
+      "construção civil",
+      "ferramentas para iniciantes",
+      "caixa de ferramentas",
+    ],
     content: [
       {
         type: "paragraph",

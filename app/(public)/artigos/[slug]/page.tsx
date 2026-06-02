@@ -5,6 +5,10 @@ import { ArrowLeft, Calendar, Clock } from "lucide-react";
 
 import { articles, getArticle } from "@/lib/articles";
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+  "https://natalmaq-main.vercel.app";
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -21,15 +25,28 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Artigo não encontrado | Natalmaq" };
   }
 
+  const url = `/artigos/${article.slug}`;
   return {
-    title: `${article.title} | Natalmaq`,
+    title: article.title,
     description: article.excerpt,
+    keywords: article.keywords,
+    authors: [{ name: article.author ?? "Equipe Natalmaq" }],
+    alternates: { canonical: url },
     openGraph: {
       title: article.title,
       description: article.excerpt,
+      url,
       type: "article",
       locale: "pt_BR",
+      publishedTime: article.isoDate,
+      authors: [article.author ?? "Equipe Natalmaq"],
       images: [{ url: article.image }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: article.excerpt,
+      images: [article.image],
     },
   };
 }
@@ -42,8 +59,49 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound();
   }
 
+  const author = article.author ?? "Equipe Natalmaq";
+  const articleUrl = `${SITE_URL}/artigos/${article.slug}`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        headline: article.title,
+        description: article.excerpt,
+        image: article.image,
+        datePublished: article.isoDate,
+        dateModified: article.isoDate,
+        author: { "@type": "Organization", name: author },
+        publisher: {
+          "@type": "Organization",
+          name: "Natalmaq",
+          logo: {
+            "@type": "ImageObject",
+            url: `${SITE_URL}/brand/natalmaq-lockup.png`,
+          },
+        },
+        mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
+        articleSection: article.category,
+        keywords: article.keywords?.join(", "),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Início", item: SITE_URL },
+          { "@type": "ListItem", position: 2, name: "Artigos", item: `${SITE_URL}/artigos` },
+          { "@type": "ListItem", position: 3, name: article.title, item: articleUrl },
+        ],
+      },
+    ],
+  };
+
   return (
     <article className="bg-bone">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero — só imagem */}
       <header className="relative h-[260px] w-full overflow-hidden bg-navy md:h-[560px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}

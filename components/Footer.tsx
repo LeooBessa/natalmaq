@@ -36,6 +36,7 @@ export function Footer() {
             title="Empresa"
             items={[
               { label: "Sobre a Natalmaq", href: "/institucional" },
+              { label: "Artigos", href: "/artigos" },
               { label: "Política de troca", href: "/institucional" },
               { label: "Termos de uso", href: "/institucional" },
               { label: "Privacidade", href: "/institucional" },
