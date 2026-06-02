@@ -252,7 +252,13 @@ export async function updateArtigoAction(
 
   revalidatePath("/admin/seo/artigos");
   revalidatePath(`/admin/seo/artigos/${id}`);
+  // Superfícies PÚBLICAS que mostram o artigo/imagem. Sem isto a edição não
+  // aparece no site: o índice /artigos é estático e a leitura pública não usa
+  // a tag "artigos".
   revalidatePath(`/artigos/${data.slug}`);
+  revalidatePath("/artigos");
+  revalidatePath("/institucional");
+  revalidatePath("/sitemap.xml");
   revalidateTag("artigos");
   return { ok: true };
 }
@@ -285,6 +291,9 @@ export async function setStatusArtigoAction(
 
   revalidatePath("/admin/seo/artigos");
   revalidatePath(`/admin/seo/artigos/${id}`);
+  revalidatePath("/artigos");
+  revalidatePath("/institucional");
+  revalidatePath("/sitemap.xml");
   revalidateTag("artigos");
   return { ok: true };
 }
@@ -299,6 +308,9 @@ export async function deleteArtigoAction(id: string) {
     return;
   }
   revalidatePath("/admin/seo/artigos");
+  revalidatePath("/artigos");
+  revalidatePath("/institucional");
+  revalidatePath("/sitemap.xml");
   revalidateTag("artigos");
   redirect("/admin/seo/artigos");
 }
