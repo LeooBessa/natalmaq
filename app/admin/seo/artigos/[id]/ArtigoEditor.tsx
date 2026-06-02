@@ -540,16 +540,27 @@ export function ArtigoEditor({
                   <h3 className="text-sm font-semibold text-zinc-900">
                     Imagem de capa
                   </h3>
-                  <label className="cursor-pointer rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-zinc-50">
-                    {uploading ? "Enviando..." : imagem ? "Trocar" : "+ Upload"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleUpload}
-                      disabled={uploading}
-                    />
-                  </label>
+                  <div className="flex items-center gap-2">
+                    {imagem && !uploading && (
+                      <button
+                        type="button"
+                        onClick={() => setImagem("")}
+                        className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                      >
+                        Remover
+                      </button>
+                    )}
+                    <label className="cursor-pointer rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-zinc-50">
+                      {uploading ? "Enviando..." : imagem ? "Trocar" : "+ Upload"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleUpload}
+                        disabled={uploading}
+                      />
+                    </label>
+                  </div>
                 </div>
                 {uploadError && (
                   <p className="text-sm text-red-700">{uploadError}</p>
