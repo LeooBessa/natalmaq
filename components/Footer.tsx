@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="bg-navy text-white/70">
+    <footer className="border-t border-line bg-white text-ink-2">
       <div className="mx-auto max-w-[1280px] px-6 py-12 text-sm">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
@@ -43,14 +43,14 @@ export function Footer() {
             ]}
           />
           <div>
-            <div className="mb-4 font-mono text-[11px] uppercase tracking-mono text-white">
+            <div className="mb-4 font-mono text-[11px] uppercase tracking-mono text-ink">
               Atendimento
             </div>
             <ul className="space-y-2">
               <li>
                 <a
                   href="tel:+558430259789"
-                  className="transition hover:text-white"
+                  className="transition hover:text-brand-500"
                 >
                   (84) 3025-9789
                 </a>
@@ -60,7 +60,7 @@ export function Footer() {
                   href="https://wa.me/558430259789"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition hover:text-white"
+                  className="transition hover:text-brand-500"
                 >
                   WhatsApp comercial
                 </a>
@@ -68,17 +68,17 @@ export function Footer() {
               <li>
                 <a
                   href="mailto:vendas@natalmaq.com.br"
-                  className="transition hover:text-white"
+                  className="transition hover:text-brand-500"
                 >
                   vendas@natalmaq.com.br
                 </a>
               </li>
-              <li className="text-white/40">Seg–Sex 7h–18h · Sáb 7h–12h</li>
+              <li className="text-ink-2/70">Seg–Sex 7h–18h · Sáb 7h–12h</li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-white/10 pt-5 font-mono text-[11px] uppercase tracking-mono md:flex-row">
+        <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-line pt-5 font-mono text-[11px] uppercase tracking-mono md:flex-row">
           <span>© {new Date().getFullYear()} NATALMAQ COMÉRCIO DE FERRAMENTAS LTDA</span>
           <span>SITE ONLINE · ATUALIZADO 02/05/2026</span>
         </div>
@@ -96,7 +96,7 @@ function FooterCol({
 }) {
   return (
     <div>
-      <div className="mb-4 font-mono text-[11px] uppercase tracking-mono text-white">
+      <div className="mb-4 font-mono text-[11px] uppercase tracking-mono text-ink">
         {title}
       </div>
       <ul className="space-y-2">
@@ -104,7 +104,7 @@ function FooterCol({
           <li key={it.label}>
             <Link
               href={it.href as never}
-              className="transition hover:text-white"
+              className="transition hover:text-brand-500"
             >
               {it.label}
             </Link>
