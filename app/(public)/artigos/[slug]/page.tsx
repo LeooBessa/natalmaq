@@ -131,7 +131,7 @@ export default async function ArticlePage({ params }: PageProps) {
           </span>
         </div>
 
-        <p className="mb-10 text-lg leading-relaxed text-ink-2">
+        <p className="mb-10 text-xl leading-relaxed text-ink-2 md:text-2xl">
           {article.excerpt}
         </p>
 
@@ -140,7 +140,7 @@ export default async function ArticlePage({ params }: PageProps) {
             return (
               <h2
                 key={i}
-                className="mb-4 mt-12 font-display text-2xl tracking-tight text-ink md:text-3xl"
+                className="mb-4 mt-12 font-display text-2xl tracking-tight text-ink md:text-[34px]"
               >
                 {block.text}
               </h2>
@@ -148,13 +148,13 @@ export default async function ArticlePage({ params }: PageProps) {
           }
           if (block.type === "list") {
             return (
-              <ul key={i} className="mb-6 space-y-2">
+              <ul key={i} className="mb-7 space-y-3">
                 {block.items.map((item, j) => (
                   <li
                     key={j}
-                    className="flex gap-3 text-base leading-relaxed text-ink/80"
+                    className="flex gap-3 text-lg leading-relaxed text-ink/80 md:text-xl"
                   >
-                    <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
+                    <span className="mt-2.5 h-2 w-2 flex-shrink-0 rounded-full bg-brand-500" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -162,7 +162,7 @@ export default async function ArticlePage({ params }: PageProps) {
             );
           }
           return (
-            <p key={i} className="mb-4 text-base leading-relaxed text-ink/80">
+            <p key={i} className="mb-5 text-lg leading-relaxed text-ink/80 md:text-xl">
               {block.text}
             </p>
           );

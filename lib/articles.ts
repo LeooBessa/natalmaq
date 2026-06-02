@@ -28,7 +28,7 @@ export const articles: Article[] = [
     category: "Segurança",
     title: "Como escolher o EPI certo para cada etapa da sua obra",
     excerpt:
-      "Capacete, luva, óculos, protetor auricular — o equipamento de proteção certo evita acidentes e mantém sua obra dentro da norma. Veja o que considerar em cada escolha.",
+      "Capacete, luva, óculos, protetor auricular. O equipamento de proteção certo evita acidentes e mantém sua obra dentro da norma. Veja o que considerar em cada escolha.",
     image:
       "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=1600&q=80",
     date: "26 de maio de 2026",
@@ -45,7 +45,7 @@ export const articles: Article[] = [
     content: [
       {
         type: "paragraph",
-        text: "Escolher o Equipamento de Proteção Individual (EPI) correto não é apenas uma exigência da legislação trabalhista — é o que mantém sua equipe segura e produtiva no dia a dia da obra.",
+        text: "Escolher o Equipamento de Proteção Individual (EPI) correto não é apenas uma exigência da legislação trabalhista. É o que mantém sua equipe segura e produtiva no dia a dia da obra.",
       },
       {
         type: "paragraph",
@@ -78,7 +78,7 @@ export const articles: Article[] = [
       { type: "heading", text: "Conforto também é segurança" },
       {
         type: "paragraph",
-        text: "Um EPI desconfortável acaba sendo deixado de lado pelo trabalhador. Por isso, priorize equipamentos com bom ajuste, ventilação e ergonomia — eles aumentam a adesão da equipe e, na prática, protegem mais.",
+        text: "Um EPI desconfortável acaba sendo deixado de lado pelo trabalhador. Por isso, priorize equipamentos com bom ajuste, ventilação e ergonomia. Eles aumentam a adesão da equipe e, na prática, protegem mais.",
       },
     ],
   },
@@ -164,7 +164,7 @@ export const articles: Article[] = [
       { type: "heading", text: "As elétricas que valem o investimento" },
       {
         type: "paragraph",
-        text: "Se for investir em ferramentas elétricas, comece por estas três — elas resolvem a maior parte dos trabalhos:",
+        text: "Se for investir em ferramentas elétricas, comece por estas três. Elas resolvem a maior parte dos trabalhos:",
       },
       {
         type: "list",
