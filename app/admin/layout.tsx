@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AdminNav } from "@/components/admin/AdminNav";
@@ -27,9 +28,16 @@ export default async function AdminLayout({
 
   const { data: admin } = await sb
     .from("admins")
-    .select("nome, role")
+    .select("nome, role, ativo")
     .eq("id", user.id)
     .maybeSingle();
+
+  // Logado mas NÃO é admin ativo (ex.: cliente comum) → fora do painel.
+  // Espelha o is_admin() da RLS. Redireciona para a home — NÃO para /admin/login,
+  // que está sob este mesmo layout e causaria loop de redirect.
+  if (!admin || !admin.ativo) {
+    redirect("/");
+  }
 
   return (
     <div className="flex min-h-screen bg-zinc-50">
