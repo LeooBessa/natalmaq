@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { ArticlesCarousel } from "@/components/home/ArticlesCarousel";
+import type { Article } from "@/lib/articles";
 import {
   Camera,
   Check,
@@ -159,7 +160,7 @@ function PillBadge({ children }: { children: React.ReactNode }) {
 
 /* ── Page ────────────────────────────────────────────────────────────── */
 
-export default function InstitucionalContent() {
+export default function InstitucionalContent({ artigos }: { artigos: Article[] }) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: KEYFRAMES }} />
@@ -563,7 +564,7 @@ export default function InstitucionalContent() {
         </section>
 
         {/* ÚLTIMOS ARTIGOS ─────────────────────────────────── */}
-        <ArticlesCarousel />
+        <ArticlesCarousel articles={artigos} />
 
       </div>
       <WhatsAppFloat />

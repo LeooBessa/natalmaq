@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { articles } from "@/lib/articles";
+import type { Article } from "@/lib/articles";
 
-export function ArticlesCarousel() {
+export function ArticlesCarousel({ articles }: { articles: Article[] }) {
   const [index, setIndex] = useState(0);
   const count = articles.length;
 
