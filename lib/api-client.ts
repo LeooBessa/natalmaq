@@ -59,9 +59,10 @@ export const api = {
       ),
   },
   busca: {
-    autocomplete: (q: string) =>
+    autocomplete: (q: string, signal?: AbortSignal) =>
       request<{ items: Pick<ProdutoComMarca, "id" | "slug" | "nome" | "preco" | "preco_promocional" | "imagens">[] }>(
         `/api/busca/autocomplete?q=${encodeURIComponent(q)}`,
+        { signal },
       ),
   },
   marcas: {

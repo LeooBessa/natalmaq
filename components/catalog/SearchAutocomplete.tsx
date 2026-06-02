@@ -27,6 +27,8 @@ export function SearchAutocomplete() {
   const [focusIdx, setFocusIdx] = useState(-1);
   const wrapRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  // Cache em memória por termo: reapagar/retypar uma query já buscada volta na hora.
+  const cacheRef = useRef<Map<string, Item[]>>(new Map());
 
   // Total de itens navegáveis: resultados + "ver todos" (se items.length > 0)
   const totalNavegaveis = items.length + (items.length > 0 ? 1 : 0);
@@ -74,22 +76,47 @@ export function SearchAutocomplete() {
   }, []);
 
   useEffect(() => {
-    if (q.trim().length < 2) {
+    const termo = q.trim();
+    if (termo.length < 2) {
       setItems([]);
+      setFocusIdx(-1);
+      setLoading(false);
+      return;
+    }
+
+    // Cache: query já buscada volta instantânea, sem rede.
+    const cached = cacheRef.current.get(termo);
+    if (cached) {
+      setItems(cached);
+      setLoading(false);
       setFocusIdx(-1);
       return;
     }
+
     setLoading(true);
     setFocusIdx(-1);
+    const controller = new AbortController();
     const t = setTimeout(async () => {
       try {
-        const res = await api.busca.autocomplete(q.trim());
-        setItems(res.items as Item[]);
-      } finally {
+        const res = await api.busca.autocomplete(termo, controller.signal);
+        const items = res.items as Item[];
+        cacheRef.current.set(termo, items);
+        setItems(items);
+        setLoading(false);
+      } catch (err) {
+        // Requisição cancelada (a query mudou): ignora — outra já vem aí.
+        if ((err as { name?: string })?.name === "AbortError") return;
+        setItems([]);
         setLoading(false);
       }
     }, 220);
-    return () => clearTimeout(t);
+
+    // Ao mudar a query: cancela o timer e aborta o fetch em voo (evita que uma
+    // resposta antiga sobrescreva a atual).
+    return () => {
+      clearTimeout(t);
+      controller.abort();
+    };
   }, [q]);
 
   // Scroll automático do item focado para a view
