@@ -61,7 +61,7 @@ async function carregar(id: string): Promise<{
     const { data, error } = await sb
       .from("artigos")
       .select(
-        "id, slug, titulo, categoria_label, excerpt, imagem, corpo, cluster_id, eh_pilar, meta_title, meta_description, keywords, status, published_at, autor_nome, reading_time, faq, howto, cluster:clusters(slug)",
+        "id, slug, titulo, categoria_label, excerpt, imagem, corpo, cluster_id, eh_pilar, meta_title, meta_description, keywords, status, published_at, autor_nome, reading_time, faq, howto, cluster:clusters!artigos_cluster_id_fkey(slug)",
       )
       .eq("id", id)
       .maybeSingle();

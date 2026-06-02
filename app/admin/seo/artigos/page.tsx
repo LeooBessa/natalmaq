@@ -79,7 +79,10 @@ async function carregar(sp: {
     let query = sb
       .from("artigos")
       .select(
-        "id, slug, titulo, excerpt, imagem, corpo, keywords, meta_description, eh_pilar, status, updated_at, cluster_id, cluster:clusters(titulo, slug)",
+        // cluster:clusters!artigos_cluster_id_fkey: qualifica o FK porque artigos
+        // tem 2 relações com clusters (cluster_id e clusters.artigo_pilar_id);
+        // sem isso o embed fica ambíguo e a query falha (zerava a lista).
+        "id, slug, titulo, excerpt, imagem, corpo, keywords, meta_description, eh_pilar, status, updated_at, cluster_id, cluster:clusters!artigos_cluster_id_fkey(titulo, slug)",
         { count: "exact" },
       );
 

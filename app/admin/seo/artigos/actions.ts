@@ -222,7 +222,7 @@ export async function updateArtigoAction(
     try {
       const { data: row } = await sb
         .from("artigos")
-        .select("links_locked, cluster:clusters(slug)")
+        .select("links_locked, cluster:clusters!artigos_cluster_id_fkey(slug)")
         .eq("id", id)
         .maybeSingle();
       const r = row as
