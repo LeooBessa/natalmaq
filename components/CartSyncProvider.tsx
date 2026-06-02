@@ -54,7 +54,12 @@ export function CartSyncProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = sb.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") mergeAndLoad();
-      if (event === "SIGNED_OUT") canSync.current = false;
+      if (event === "SIGNED_OUT") {
+        canSync.current = false;
+        // Logout esvazia o carrinho local. Os itens já foram sincronizados na
+        // conta (syncCartAction), então voltam no próximo login via mergeAndLoad.
+        useCart.getState().clear();
+      }
     });
 
     return () => subscription.unsubscribe();
