@@ -5,12 +5,11 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
 import {
   PEDIDO_STATUS,
-  PEDIDO_STATUS_BADGE,
   PEDIDO_STATUS_BORDER,
   PEDIDO_STATUS_LABEL_CURTO,
   PEDIDO_STATUS_TEXT,
-  isPedidoStatus,
 } from "../pedidos/_lib/status";
+import { StatusBadge } from "../pedidos/_components/StatusBadge";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Dashboard" };
@@ -283,15 +282,5 @@ function AlertCard({
         <p className="text-xs text-zinc-400">{sub}</p>
       </div>
     </Link>
-  );
-}
-
-export function StatusBadge({ status }: { status: string }) {
-  const cls = isPedidoStatus(status) ? PEDIDO_STATUS_BADGE[status] : "bg-zinc-100 text-zinc-700";
-  const label = isPedidoStatus(status) ? PEDIDO_STATUS_LABEL_CURTO[status] : status;
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>
-      {label}
-    </span>
   );
 }

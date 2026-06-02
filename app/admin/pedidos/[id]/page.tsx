@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
 import { buildOrderMessage, buildWaLink } from "@/lib/whatsapp";
-import { StatusBadge } from "../../dashboard/page";
+import { StatusBadge } from "../_components/StatusBadge";
 import { PedidoActions } from "./PedidoActions";
 import { PedidoEditor } from "./PedidoEditor";
 import { PedidoTimeline } from "./PedidoTimeline";

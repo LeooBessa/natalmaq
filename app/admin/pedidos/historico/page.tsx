@@ -3,7 +3,7 @@ import { MessageCircle, Archive } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
-import { StatusBadge } from "../../dashboard/page";
+import { StatusBadge } from "../_components/StatusBadge";
 import {
   PEDIDO_STATUS_LABEL_CURTO,
   type PedidoStatus,
