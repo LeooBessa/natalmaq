@@ -6,6 +6,8 @@ export const runtime = "edge";
 
 const COLS = "id, slug, nome, preco, preco_promocional, imagens";
 
+type Produto = { id: string } & Record<string, unknown>;
+
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,12 +17,10 @@ function getSupabase() {
 }
 
 /**
- * Monta um tsquery de PREFIXO com AND a partir do que o usuário digitou:
+ * tsquery de PREFIXO com AND a partir do que o usuário digitou:
  *   "furadeira bosch" -> "furadeira:* & bosch:*"
- * - tira acentos (NFD) p/ casar com busca_tsv, que é gerado com immutable_unaccent;
- * - mantém só palavras alfanuméricas (evita quebrar a sintaxe do tsquery);
- * - cada palavra é prefixo (:*) p/ casar enquanto o usuário ainda digita.
- * Retorna "" se não sobrar nenhuma palavra utilizável.
+ * tira acentos (casa com busca_tsv, gerado via immutable_unaccent), mantém só
+ * palavras alfanuméricas e prefixa cada uma (:*). "" se não sobrar palavra.
  */
 function montarTsQuery(q: string): string {
   const limpo = q
@@ -31,6 +31,22 @@ function montarTsQuery(q: string): string {
   return palavras.map((w) => `${w}:*`).join(" & ");
 }
 
+/** Mescla as camadas na ordem de prioridade, dedup por id, corta no limite. */
+function mesclar(camadas: Produto[][], limite = 8): Produto[] {
+  const vistos = new Set<string>();
+  const out: Produto[] = [];
+  for (const camada of camadas) {
+    for (const p of camada) {
+      if (out.length >= limite) return out;
+      if (p && !vistos.has(p.id)) {
+        vistos.add(p.id);
+        out.push(p);
+      }
+    }
+  }
+  return out;
+}
+
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
 
@@ -39,42 +55,47 @@ export async function GET(req: NextRequest) {
   }
 
   const sb = getSupabase();
-
-  // 1) Full-text no busca_tsv (nome[A] + descricao[B], acento-insensível).
-  //    Multi-palavra em qualquer ordem, prefixo enquanto digita, ranqueável.
-  let items: unknown[] = [];
   const tsq = montarTsQuery(q);
-  if (tsq) {
-    const { data } = await sb
+
+  // 3 camadas em paralelo, ordenadas por relevância de PREFIXO (regra GERAL,
+  // vale para qualquer termo):
+  //   1) nome COMEÇA com o termo             -> prioridade máxima
+  //   2) full-text (multi-palavra/acento/palavra-prefixo) -> abrangente e robusto
+  //   3) nome CONTÉM o termo (qualquer pos.) -> "as outras opções", por último
+  const [comeca, ft, contem] = await Promise.all([
+    sb
       .from("produtos")
       .select(COLS)
       .eq("ativo", true)
-      .textSearch("busca_tsv", tsq, { config: "portuguese" })
-      .order("destaque", { ascending: false })
-      .limit(8);
-    items = data ?? [];
-  }
-
-  // 2) Fallback substring (índice trigram): garante que nunca volte MENOS que
-  //    antes — pega casos que o full-text não cobre (ex.: pedaços de código).
-  if (items.length === 0) {
-    const { data, error } = await sb
+      .ilike("nome", `${q}%`)
+      .limit(8),
+    tsq
+      ? sb
+          .from("produtos")
+          .select(COLS)
+          .eq("ativo", true)
+          .textSearch("busca_tsv", tsq, { config: "portuguese" })
+          .limit(8)
+      : Promise.resolve({ data: [] as Produto[] }),
+    sb
       .from("produtos")
       .select(COLS)
       .eq("ativo", true)
       .ilike("nome", `%${q}%`)
-      .limit(8);
-    if (error) {
-      return NextResponse.json({ items: [] }, { status: 500 });
-    }
-    items = data ?? [];
-  }
+      .limit(8),
+  ]);
+
+  const items = mesclar([
+    (comeca.data ?? []) as Produto[],
+    (ft.data ?? []) as Produto[],
+    (contem.data ?? []) as Produto[],
+  ]);
 
   return NextResponse.json(
     { items },
     {
-      // Cache no CDN da Vercel: query repetida volta instantânea, sem tocar a
-      // função/Supabase. Catálogo muda pouco; SWR mantém fresco em 2º plano.
+      // Cache no CDN da Vercel: query repetida volta instantânea. Catálogo muda
+      // pouco; stale-while-revalidate mantém fresco em 2º plano.
       headers: {
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=86400",
       },
