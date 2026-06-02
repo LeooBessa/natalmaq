@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
+import { ArticlesCarousel } from "@/components/home/ArticlesCarousel";
 import {
   Camera,
   Check,
@@ -560,6 +561,9 @@ export default function InstitucionalContent() {
             </div>
           </div>
         </section>
+
+        {/* ÚLTIMOS ARTIGOS ─────────────────────────────────── */}
+        <ArticlesCarousel />
 
       </div>
       <WhatsAppFloat />
