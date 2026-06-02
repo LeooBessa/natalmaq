@@ -33,6 +33,8 @@ type ArtigoRow = {
   updated_at: string | null;
   cluster_id: string | null;
   cluster: { titulo: string; slug: string } | null;
+  imagem_alt: string | null;
+  faq: unknown;
 };
 
 type ClusterOpt = { id: string; titulo: string; slug: string };
@@ -82,7 +84,7 @@ async function carregar(sp: {
         // cluster:clusters!artigos_cluster_id_fkey: qualifica o FK porque artigos
         // tem 2 relações com clusters (cluster_id e clusters.artigo_pilar_id);
         // sem isso o embed fica ambíguo e a query falha (zerava a lista).
-        "id, slug, titulo, excerpt, imagem, corpo, keywords, meta_description, eh_pilar, status, updated_at, cluster_id, cluster:clusters!artigos_cluster_id_fkey(titulo, slug)",
+        "id, slug, titulo, excerpt, imagem, imagem_alt, corpo, keywords, meta_description, faq, eh_pilar, status, updated_at, cluster_id, cluster:clusters!artigos_cluster_id_fkey(titulo, slug)",
         { count: "exact" },
       );
 
@@ -216,9 +218,14 @@ export default async function ArtigosPage({
             {artigos.map((a) => {
               const { score } = scoreArtigo({
                 titulo: a.titulo ?? "",
-                excerpt: a.meta_description ?? a.excerpt ?? "",
+                // mesma fonte do editor: meta_description tem prioridade sobre excerpt.
+                excerpt: a.meta_description || a.excerpt || "",
                 keywords: a.keywords ?? [],
                 conteudo: toBlocks(a.corpo),
+                imagemAlt: a.imagem_alt ?? undefined,
+                faq: Array.isArray(a.faq)
+                  ? (a.faq as { question: string; answer: string }[])
+                  : undefined,
                 slug: a.slug ?? "",
               });
               const badge = STATUS_BADGE[a.status];
