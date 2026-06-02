@@ -109,7 +109,12 @@ export function ArtigoEditor({
   // --- Campos controlados ---------------------------------------------------
   const [titulo, setTitulo] = useState(artigo.titulo);
   const [slug, setSlug] = useState(artigo.slug);
-  const [slugLocked, setSlugLocked] = useState(true);
+  // Auto-derivar o slug do título SÓ em rascunho novo (slug "rascunho-...").
+  // Em artigo já existente o slug é preservado — abrir/salvar não muda a URL
+  // (mudar slug quebra links e indexação). Use o cadeado para editar de propósito.
+  const [slugLocked, setSlugLocked] = useState(
+    artigo.slug.startsWith("rascunho-"),
+  );
   const [excerpt, setExcerpt] = useState(artigo.excerpt);
   const [metaTitle, setMetaTitle] = useState(artigo.meta_title);
   const [metaDescription, setMetaDescription] = useState(
