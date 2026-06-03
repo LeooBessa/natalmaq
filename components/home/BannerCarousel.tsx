@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -36,12 +37,14 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
   return (
     <div className="relative w-full overflow-hidden bg-navy">
       {banners.map((b, i) => (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
+        <Image
           key={b.id}
           src={b.imagem_url}
           alt={b.titulo ?? ""}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${i === idx ? "opacity-100" : "opacity-0"}`}
+          fill
+          priority={i === 0}
+          sizes="100vw"
+          className={`object-cover transition-opacity duration-700 ${i === idx ? "opacity-100" : "opacity-0"}`}
         />
       ))}
 
