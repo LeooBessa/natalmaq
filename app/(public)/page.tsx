@@ -1,10 +1,33 @@
 import Image from "next/image";
 import Link from "next/link";
+import {
+  Wrench,
+  Drill,
+  Cog,
+  Disc3,
+  Scissors,
+  Zap,
+  Footprints,
+  Hammer,
+  type LucideIcon,
+} from "lucide-react";
 
 import { BannerCarousel } from "@/components/home/BannerCarousel";
 import { CuponsStrip } from "@/components/home/CuponsStrip";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { listBanners, listCategorias, listCuponsHome, listMarcas, listProdutos } from "@/lib/data";
+
+// Ícone (laranja) de cada categoria em destaque na home. Fallback: Wrench.
+const CAT_ICONS: Record<string, LucideIcon> = {
+  chave: Wrench,
+  broca: Drill,
+  correia: Cog,
+  disco: Disc3,
+  alicate: Scissors,
+  eletrodo: Zap,
+  bota: Footprints,
+  martelo: Hammer,
+};
 
 export const revalidate = 60;
 
@@ -20,7 +43,25 @@ export default async function HomePage() {
 
   // Prefere produtos com flag destaque=true; fallback nos primeiros do catálogo
   const destaquesItems = (destaques.total > 0 ? destaques.items : todosProdutos.items).slice(0, 8);
-  const catTop = categorias.slice(0, 8);
+
+  // Categorias em destaque na home: curadoria por slug (variedade + volume de
+  // produtos). Vendas no site ainda são poucas p/ ranquear por "mais vendidas".
+  // Edite esta lista pra trocar quais categorias aparecem.
+  const CATEGORIAS_DESTAQUE = [
+    "chave",
+    "broca",
+    "correia",
+    "disco",
+    "alicate",
+    "eletrodo",
+    "bota",
+    "martelo",
+  ];
+  const catBySlug = new Map(categorias.map((c) => [c.slug, c]));
+  const curadas = CATEGORIAS_DESTAQUE.map((s) => catBySlug.get(s)).filter(
+    (c): c is (typeof categorias)[number] => Boolean(c),
+  );
+  const catTop = (curadas.length > 0 ? curadas : categorias).slice(0, 8);
 
   return (
     <div>
@@ -74,11 +115,8 @@ export default async function HomePage() {
           <div className="mx-auto max-w-[1280px] px-6">
             <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <div className="font-mono text-[11px] uppercase tracking-mono text-brand-500">
-                  01 · CATEGORIAS
-                </div>
-                <h2 className="mt-2 font-display text-[32px] leading-[0.95] tracking-tight text-ink md:text-[44px]">
-                  NAVEGUE POR DEPARTAMENTO
+                <h2 className="font-display text-[32px] leading-[0.95] tracking-tight text-ink md:text-[44px]">
+                  Navegue por Categoria
                 </h2>
               </div>
               <Link
@@ -90,27 +128,26 @@ export default async function HomePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-px border border-line bg-line md:grid-cols-4">
-              {catTop.map((c, i) => (
-                <Link
-                  key={c.id}
-                  href={`/catalogo?categoria=${c.slug}`}
-                  className="group flex min-h-[140px] flex-col justify-between bg-white p-5 transition hover:bg-bone"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center bg-navy font-mono text-[10px] text-white">
-                      {String(i + 1).padStart(2, "0")}
+              {catTop.map((c) => {
+                const Icon = CAT_ICONS[c.slug] ?? Wrench;
+                return (
+                  <Link
+                    key={c.id}
+                    href={`/catalogo?categoria=${c.slug}`}
+                    className="group flex min-h-[140px] flex-col justify-between bg-white p-5 transition hover:bg-bone"
+                  >
+                    <Icon className="h-9 w-9 text-brand-500" strokeWidth={1.75} />
+                    <div>
+                      <div className="text-[15px] font-bold leading-tight text-ink group-hover:text-brand-500">
+                        {c.nome}
+                      </div>
+                      <div className="mt-1 font-mono text-[11px] uppercase tracking-mono text-ink-2">
+                        ver produtos →
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div className="text-[15px] font-bold leading-tight text-ink group-hover:text-brand-500">
-                      {c.nome}
-                    </div>
-                    <div className="mt-1 font-mono text-[11px] uppercase tracking-mono text-ink-2">
-                      ver produtos →
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -121,11 +158,8 @@ export default async function HomePage() {
         <div className="mx-auto max-w-[1280px] px-6">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <div className="font-mono text-[11px] uppercase tracking-mono text-brand-500">
-                02 · LINHA PROFISSIONAL
-              </div>
-              <h2 className="mt-2 font-display text-[32px] leading-[0.95] tracking-tight text-ink md:text-[44px]">
-                DESTAQUES DA SEMANA
+              <h2 className="font-display text-[32px] leading-[0.95] tracking-tight text-ink md:text-[44px]">
+                Destaques da Semana
               </h2>
             </div>
             <Link
@@ -152,10 +186,12 @@ export default async function HomePage() {
 
       {/* MARCAS ───────────────────────────────────────────── */}
       {marcas.length > 0 && (
-        <section className="border-y border-line bg-bone py-12">
+        <section className="border-t border-line bg-bone py-16">
           <div className="mx-auto max-w-[1280px] px-6">
-            <div className="mb-6 font-mono text-[11px] uppercase tracking-mono text-ink-2">
-              03 · MARCAS PARCEIRAS
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+              <h2 className="font-display text-[32px] leading-[0.95] tracking-tight text-ink md:text-[44px]">
+                Marcas Parceiras
+              </h2>
             </div>
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
               {marcas.slice(0, 24).map((m) => (
@@ -187,47 +223,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* CTA STRIP ────────────────────────────────────────── */}
-      <section className="bg-navy py-12 text-white">
-        <div className="mx-auto grid max-w-[1280px] gap-8 px-6 md:grid-cols-3">
-          {[
-            [
-              "ORÇAMENTO B2B",
-              "Cadastre seu CNPJ e receba condições especiais para volume.",
-              "Explorar catálogo →",
-              "/catalogo",
-            ],
-            [
-              "ENTREGA EM TODO RN",
-              "Frota própria com saída diária para Natal e região metropolitana.",
-              "Falar no WhatsApp →",
-              "https://wa.me/558430259789",
-            ],
-            [
-              "ASSISTÊNCIA TÉCNICA",
-              "Reparo autorizado das principais marcas em nosso galpão.",
-              "Solicitar serviço →",
-              "/institucional",
-            ],
-          ].map(([t, d, a, h]) => (
-            <Link
-              key={t}
-              href={h as never}
-              className="block border-l-2 border-brand-500 pl-5"
-            >
-              <div className="font-mono text-[11px] uppercase tracking-mono text-brand-400">
-                {t}
-              </div>
-              <div className="mt-2 text-[15px] leading-relaxed text-white/85">
-                {d}
-              </div>
-              <div className="mt-4 inline-block border-b border-brand-500 pb-0.5 text-[13px] text-white">
-                {a}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
