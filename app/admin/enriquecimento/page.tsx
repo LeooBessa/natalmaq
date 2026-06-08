@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { RevisaoList, type Candidato } from "./RevisaoList";
 import { BuscaPanel } from "./BuscaPanel";
+import { AutoAprovarPanel } from "./AutoAprovarPanel";
+import { RevisaoAprovados, type Auditado } from "./RevisaoAprovados";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -27,6 +29,7 @@ export default async function EnriquecimentoPage({
     { count: aprovados },
     { count: rejeitados },
     { count: semFoto },
+    { data: auditData, count: auditCount },
   ] = await Promise.all([
     sb
       .from("produto_enriquecimento")
@@ -49,11 +52,23 @@ export default async function EnriquecimentoPage({
       .from("produtos")
       .select("id", { count: "exact", head: true })
       .or("imagens.is.null,imagens.eq.[]"),
+    // Auto-aprovados ainda NÃO auditados (revisado_em null) — duvidosos primeiro.
+    sb
+      .from("produto_enriquecimento")
+      .select("id, titulo, score, produto:produtos(id, codigo, nome, imagens)", {
+        count: "exact",
+      })
+      .eq("status", "aprovado")
+      .is("revisado_em", null)
+      .order("score", { ascending: true })
+      .limit(60),
   ]);
 
   const itens = (data ?? []) as unknown as Candidato[];
   const pendentes = count ?? 0;
   const totalPages = Math.ceil(pendentes / PAGE_SIZE);
+  const auditados = (auditData ?? []) as unknown as Auditado[];
+  const aRevisar = auditCount ?? 0;
 
   return (
     <div className="space-y-6">
@@ -66,6 +81,8 @@ export default async function EnriquecimentoPage({
       </div>
 
       <BuscaPanel totalSemFoto={semFoto ?? 0} />
+
+      <AutoAprovarPanel />
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
@@ -82,6 +99,22 @@ export default async function EnriquecimentoPage({
         </div>
       </div>
 
+      {aRevisar > 0 && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-lg font-bold text-zinc-900">
+              Revisão dos auto-aprovados ({aRevisar})
+            </h2>
+            <p className="text-sm text-zinc-500">
+              Fotos de imagem única aplicadas automaticamente, das mais duvidosas
+              (menor %) primeiro. Confirme as certas (✓), troque (↻) ou remova (🗑) as
+              erradas.
+            </p>
+          </div>
+          <RevisaoAprovados itens={auditados} />
+        </div>
+      )}
+
       {pendentes === 0 ? (
         <p className="rounded-lg border border-zinc-200 bg-white px-5 py-12 text-center text-zinc-500">
           Nenhum candidato pendente. Use o botão acima para buscar candidatos no
@@ -89,9 +122,13 @@ export default async function EnriquecimentoPage({
         </p>
       ) : (
         <>
-          <p className="text-sm text-zinc-500">
-            Página {page} de {totalPages} · ordenado por maior compatibilidade
-          </p>
+          <div>
+            <h2 className="text-lg font-bold text-zinc-900">Fila manual ({pendentes})</h2>
+            <p className="text-sm text-zinc-500">
+              Página {page} de {totalPages} · os que precisam de olho humano
+              (medida não confirmada no anúncio).
+            </p>
+          </div>
           <RevisaoList itens={itens} />
 
           {totalPages > 1 && (

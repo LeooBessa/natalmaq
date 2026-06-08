@@ -10,22 +10,17 @@ export type AcaoResult = { ok: boolean; error?: string };
 // Aprovar / Rejeitar candidatos
 // ============================================================================
 
+type CandImg = { produto_id: string; titulo: string | null; imagem_url: string };
+
 /**
- * Aprova um candidato: baixa a imagem do Mercado Livre, re-hospeda no Storage
- * próprio (bucket `produtos`) e aplica foto + descrição ao produto.
+ * Baixa a imagem do candidato, re-hospeda no Storage (bucket `produtos`) e aplica
+ * foto + (se vazia) descrição ao produto. Helper compartilhado pela aprovação
+ * manual e pela automática. NÃO mexe no status do candidato.
  */
-export async function aprovarEnriquecimento(id: string): Promise<AcaoResult> {
-  const sb = await createSupabaseServerClient();
-
-  const { data: cand, error: e1 } = await sb
-    .from("produto_enriquecimento")
-    .select("id, produto_id, titulo, imagem_url, status")
-    .eq("id", id)
-    .single();
-  if (e1 || !cand) return { ok: false, error: "Candidato não encontrado." };
-  if (cand.status !== "pendente") return { ok: false, error: "Candidato já revisado." };
-
-  // Baixa a imagem e re-hospeda no Storage (evita hot-link do CDN do ML).
+async function aplicarImagemAoProduto(
+  sb: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  cand: CandImg,
+): Promise<AcaoResult> {
   let publicUrl: string;
   try {
     const resp = await fetch(cand.imagem_url);
@@ -56,6 +51,25 @@ export async function aprovarEnriquecimento(id: string): Promise<AcaoResult> {
     .update(update)
     .eq("id", cand.produto_id);
   if (errProd) return { ok: false, error: "Falha ao atualizar o produto: " + errProd.message };
+  return { ok: true };
+}
+
+/**
+ * Aprova um candidato manualmente: aplica a imagem e marca aprovado
+ * (revisado_em = agora, pois já passou por olho humano).
+ */
+export async function aprovarEnriquecimento(id: string): Promise<AcaoResult> {
+  const sb = await createSupabaseServerClient();
+  const { data: cand, error: e1 } = await sb
+    .from("produto_enriquecimento")
+    .select("id, produto_id, titulo, imagem_url, status")
+    .eq("id", id)
+    .single();
+  if (e1 || !cand) return { ok: false, error: "Candidato não encontrado." };
+  if (cand.status !== "pendente") return { ok: false, error: "Candidato já revisado." };
+
+  const r = await aplicarImagemAoProduto(sb, cand);
+  if (!r.ok) return r;
 
   await sb
     .from("produto_enriquecimento")
@@ -265,4 +279,154 @@ export async function processarLoteEnriquecimento(
     ultimoId,
     fim: produtos.length < LOTE,
   };
+}
+
+// ============================================================================
+// Auto-aprovação (imagem única + score) + reprovação de genéricos
+// ============================================================================
+
+// Imagem = download + upload por item (mais lento que a busca). Lote pequeno
+// p/ caber no limite de Server Action; o painel chama em sequência.
+const LOTE_AUTO = 5;
+// Cobertura mínima do nome p/ auto-aprovar um candidato de imagem ÚNICA.
+const LIMITE_SCORE_AUTO = 60;
+
+/**
+ * Auto-processa um lote de candidatos PENDENTES:
+ *  - imagem REPETIDA (mesma foto em 2+ produtos) → reprovado: é match genérico,
+ *    quase sempre errado (ex.: 1 foto de polia em 13 polias diferentes);
+ *  - imagem ÚNICA e score >= LIMITE_SCORE_AUTO → aprovado (aplica a foto,
+ *    revisado_em=NULL → cai na tela de Revisão p/ conferência visual);
+ *  - imagem única mas score baixo → fica pendente (revisão manual).
+ * Cursor por id; o painel chama em sequência passando o ultimoId.
+ */
+export async function autoAprovarLote(afterId: string | null): Promise<{
+  ok: boolean;
+  processados: number;
+  aprovados: number;
+  reprovados: number;
+  ultimoId: string | null;
+  fim: boolean;
+  error?: string;
+}> {
+  const sb = await createSupabaseServerClient();
+  let q = sb
+    .from("produto_enriquecimento")
+    .select("id, produto_id, titulo, imagem_url, score")
+    .eq("status", "pendente")
+    .order("id", { ascending: true })
+    .limit(LOTE_AUTO);
+  if (afterId) q = q.gt("id", afterId);
+
+  const { data, error } = await q;
+  if (error) return { ok: false, processados: 0, aprovados: 0, reprovados: 0, ultimoId: afterId, fim: true, error: error.message };
+
+  const cands = (data ?? []) as Array<{
+    id: string;
+    produto_id: string;
+    titulo: string | null;
+    imagem_url: string;
+    score: number;
+  }>;
+  if (cands.length === 0) return { ok: true, processados: 0, aprovados: 0, reprovados: 0, ultimoId: afterId, fim: true };
+
+  // Quantos produtos no total (qualquer status) usam cada imagem deste lote?
+  // 2+ = foto genérica reaplicada → reprova. Conta sem filtrar status p/ o
+  // resultado não mudar conforme o lote vai reprovando os irmãos.
+  const urls = [...new Set(cands.map((c) => c.imagem_url))];
+  const { data: irmaos } = await sb
+    .from("produto_enriquecimento")
+    .select("imagem_url")
+    .in("imagem_url", urls);
+  const usos = new Map<string, number>();
+  for (const r of irmaos ?? []) usos.set(r.imagem_url, (usos.get(r.imagem_url) ?? 0) + 1);
+
+  let aprovados = 0;
+  let reprovados = 0;
+  for (const c of cands) {
+    if ((usos.get(c.imagem_url) ?? 0) > 1) {
+      await sb
+        .from("produto_enriquecimento")
+        .update({ status: "rejeitado", revisado_em: new Date().toISOString() })
+        .eq("id", c.id);
+      reprovados++;
+      continue;
+    }
+    if ((c.score ?? 0) < LIMITE_SCORE_AUTO) continue; // única mas fraca → manual
+    const r = await aplicarImagemAoProduto(sb, c);
+    if (!r.ok) continue; // imagem quebrada etc. → deixa pendente
+    await sb
+      .from("produto_enriquecimento")
+      .update({ status: "aprovado", revisado_em: null })
+      .eq("id", c.id);
+    aprovados++;
+  }
+
+  const ultimoId = cands[cands.length - 1].id;
+  revalidatePath("/admin/enriquecimento");
+  return { ok: true, processados: cands.length, aprovados, reprovados, ultimoId, fim: cands.length < LOTE_AUTO };
+}
+
+/** Confirma um auto-aprovado (humano olhou e está OK) → sai da revisão. */
+export async function confirmarEnriquecimento(id: string): Promise<AcaoResult> {
+  const sb = await createSupabaseServerClient();
+  const { error } = await sb
+    .from("produto_enriquecimento")
+    .update({ revisado_em: new Date().toISOString() })
+    .eq("id", id)
+    .eq("status", "aprovado");
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/enriquecimento");
+  return { ok: true };
+}
+
+/** Confirma vários auto-aprovados de uma vez (todos saem da revisão). */
+export async function confirmarVarios(ids: string[]): Promise<AcaoResult> {
+  if (ids.length === 0) return { ok: true };
+  const sb = await createSupabaseServerClient();
+  const { error } = await sb
+    .from("produto_enriquecimento")
+    .update({ revisado_em: new Date().toISOString() })
+    .in("id", ids)
+    .eq("status", "aprovado");
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/enriquecimento");
+  return { ok: true };
+}
+
+/** Remove a foto auto-aprovada (estava errada): limpa a imagem do produto e rejeita. */
+export async function removerEnriquecimentoAprovado(id: string): Promise<AcaoResult> {
+  const sb = await createSupabaseServerClient();
+  const { data: cand } = await sb
+    .from("produto_enriquecimento")
+    .select("produto_id")
+    .eq("id", id)
+    .single();
+  if (!cand) return { ok: false, error: "Candidato não encontrado." };
+  await sb.from("produtos").update({ imagens: [] }).eq("id", cand.produto_id);
+  await sb
+    .from("produto_enriquecimento")
+    .update({ status: "rejeitado", revisado_em: new Date().toISOString() })
+    .eq("id", id);
+  revalidatePath("/admin/enriquecimento");
+  return { ok: true };
+}
+
+/** Troca a foto do produto por uma enviada manualmente (URL já no Storage). */
+export async function trocarImagemEnriquecimento(id: string, novaUrl: string): Promise<AcaoResult> {
+  const sb = await createSupabaseServerClient();
+  if (!novaUrl) return { ok: false, error: "URL inválida." };
+  const { data: cand } = await sb
+    .from("produto_enriquecimento")
+    .select("produto_id")
+    .eq("id", id)
+    .single();
+  if (!cand) return { ok: false, error: "Candidato não encontrado." };
+  await sb.from("produtos").update({ imagens: [novaUrl] }).eq("id", cand.produto_id);
+  await sb
+    .from("produto_enriquecimento")
+    .update({ revisado_em: new Date().toISOString() })
+    .eq("id", id);
+  revalidatePath("/admin/enriquecimento");
+  return { ok: true };
 }
