@@ -9,5 +9,8 @@
   },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index" }
+  ],
+  "crons": [
+    { "path": "/api/sync/ds", "schedule": "0 5 * * *" }
   ]
 }

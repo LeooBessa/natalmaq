@@ -8,7 +8,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import busca, frete, marcas_categorias, pedidos, produtos
+from .routers import busca, frete, marcas_categorias, pedidos, produtos, sync_ds
 
 app = FastAPI(
     title="Natalmaq API",
@@ -37,3 +37,4 @@ app.include_router(busca.router)
 app.include_router(marcas_categorias.router)
 app.include_router(frete.router)
 app.include_router(pedidos.router)
+app.include_router(sync_ds.router)

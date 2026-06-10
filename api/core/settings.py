@@ -19,6 +19,17 @@ class Settings(BaseSettings):
     loja_whatsapp: str = Field(default="", alias="NEXT_PUBLIC_LOJA_WHATSAPP")
     loja_nome: str = Field(default="Natalmaq", alias="NEXT_PUBLIC_LOJA_NOME")
 
+    # ── Integração DS WEBSERVICE (Delphi) ──────────────────────────────
+    ds_api_base: str = Field(
+        default="http://delphi.serveftp.com:3579", alias="DS_API_BASE"
+    )
+    ds_api_email: str = Field(default="", alias="DS_API_EMAIL")
+    ds_api_senha: str = Field(default="", alias="DS_API_SENHA")
+    # Token compartilhado para proteger as rotas /api/sync/* (cron + manual).
+    # Vercel Cron envia automaticamente "Authorization: Bearer <CRON_SECRET>".
+    sync_secret: str = Field(default="", alias="SYNC_SECRET")
+    cron_secret: str = Field(default="", alias="CRON_SECRET")
+
 
 @lru_cache
 def get_settings() -> Settings:
