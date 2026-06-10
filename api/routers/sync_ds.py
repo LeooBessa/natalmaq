@@ -75,6 +75,10 @@ def _promo_ativa(p: dict[str, Any]) -> float | None:
     preco = _num(p.get("preco_promocao"))
     if not preco or preco <= 0:
         return None
+    # promoção só é válida se for MENOR que o preço de venda
+    venda = _num(p.get("preco_venda"))
+    if venda is not None and preco >= venda:
+        return None
     agora = _now_iso()
     fim = p.get("fim_promocao")
     ini = p.get("inicio_promocao")
@@ -186,7 +190,7 @@ def _sync_estoque_page(sb, ds: DSClient, page: int, alt_inicio: str | None) -> d
         c = extrair_codigo(r)
         q = extrair_estoque_qtd(r)
         if c is not None and q is not None:
-            qtd[c] = int(round(q))
+            qtd[c] = max(0, int(round(q)))  # DS manda negativo p/ vendido a descoberto
     rows = [{"codigo": c, "estoque": q, "synced_at": now} for c, q in qtd.items()]
 
     updated = 0
@@ -203,15 +207,18 @@ async def probe(
     request: Request,
     authorization: str | None = Header(default=None),
     secret: str | None = Query(default=None),
+    codigo: str | None = Query(default=None, description="auditar 1 produto específico"),
+    qreg: int = Query(default=3, ge=1, le=50),
 ):
-    """Diagnóstico: mostra o formato REAL das respostas do DS (sem segredos)."""
+    """Diagnóstico: formato REAL das respostas do DS. Com ?codigo=, devolve os
+    dados DS daquele produto (p/ cruzar com o banco numa auditoria)."""
     _check_secret(request, authorization, secret)
     ds = DSClient()
     login = ds.login()
     empresa = (login.get("empresas") or [{}])[0]
 
-    produtos = ds.get_produtos(qreg=3, page=1)
-    estoque = ds.get_estoque(qreg=3, page=1)
+    produtos = ds.get_produtos(qreg=qreg, page=1, codigo_produto=codigo)
+    estoque = ds.get_estoque(qreg=qreg, page=1, codigo_produto=codigo)
 
     def keys(lst: list[dict[str, Any]]) -> list[str]:
         return sorted(lst[0].keys()) if lst else []
