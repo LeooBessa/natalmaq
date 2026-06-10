@@ -30,7 +30,8 @@ from ..core.supabase import get_supabase
 
 router = APIRouter(prefix="/api/sync/ds", tags=["sync"])
 
-QREG = 500            # registros por página no DS
+QREG = 1000           # registros por página no DS (full cabe em 1 invocação)
+REMOVAL_CAP = 800     # trava: não soft-deleta mais que isso num full (sync suspeito)
 TIME_BUDGET = 50.0    # segundos por invocação (maxDuration=60)
 WRITE_BATCH = 500     # linhas por upsert no Supabase
 
@@ -265,7 +266,7 @@ async def sync(
     last_alt = None if reset else state.get("last_alt")
 
     if reset:
-        stats = {}
+        stats = {"full_started_at": _now_iso()}
 
     produto_page = int(stats.get("produto_page", 1))
     estoque_page = int(stats.get("estoque_page", 1))
@@ -289,6 +290,22 @@ async def sync(
                     produtos_done = True
                 else:
                     produto_page += 1
+            # 1.5) detecção de remoção: produtos do DS não tocados neste full
+            # sumiram do DS → soft-delete (com trava de segurança).
+            if produtos_done and not stats.get("removals_done"):
+                fs = stats.get("full_started_at")
+                if fs:
+                    res = sb.rpc(
+                        "ds_finalize_removals", {"full_started": fs, "cap": REMOVAL_CAP}
+                    ).execute()
+                    removidos = res.data if isinstance(res.data, int) else 0
+                    if removidos < 0:
+                        log.append(f"⚠ remoção ABORTADA (trava): {-removidos} candidatos > cap {REMOVAL_CAP}")
+                        stats["removal_warning"] = -removidos
+                    else:
+                        log.append(f"soft-delete removidos do DS: {removidos}")
+                        stats["ultimo_removidos"] = removidos
+                    stats["removals_done"] = True
             # 2) estoque (quantidades) — só depois de produtos prontos
             while produtos_done and not estoque_done and (time.monotonic() - t0) < TIME_BUDGET:
                 r = _sync_estoque_page(sb, ds, estoque_page, None)
@@ -341,3 +358,13 @@ async def sync(
         stats["last_error"] = str(e)[:500]
         _write_state(sb, phase, max_alt or last_alt, stats)
         raise HTTPException(500, f"sync falhou: {e}") from e
+
+
+@router.api_route("/full", methods=["GET", "POST"])
+async def sync_full(
+    request: Request,
+    authorization: str | None = Header(default=None),
+    secret: str | None = Query(default=None),
+):
+    """Força um sync FULL (reset) + detecção de remoção. Usado pelo cron diário."""
+    return await sync(request, authorization, secret, reset=True)

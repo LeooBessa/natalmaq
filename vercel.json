@@ -11,6 +11,6 @@
     { "source": "/api/:path*", "destination": "/api/index" }
   ],
   "crons": [
-    { "path": "/api/sync/ds", "schedule": "0 5 * * *" }
+    { "path": "/api/sync/ds/full", "schedule": "0 5 * * *" }
   ]
 }
