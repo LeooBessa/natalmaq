@@ -2,13 +2,19 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Wrench,
-  Drill,
   Cog,
+  Boxes,
+  Anvil,
+  Drill,
+  Bolt,
   Disc3,
-  Scissors,
+  HardHat,
   Zap,
-  Footprints,
-  Hammer,
+  Flame,
+  Cable,
+  Plug,
+  Sticker,
+  Droplets,
   type LucideIcon,
 } from "lucide-react";
 
@@ -17,16 +23,22 @@ import { CuponsStrip } from "@/components/home/CuponsStrip";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { listBanners, listCategorias, listCuponsHome, listMarcas, listProdutos } from "@/lib/data";
 
-// Ícone (laranja) de cada categoria em destaque na home. Fallback: Wrench.
+// Ícone (laranja) de cada categoria, por slug. Fallback: Wrench.
 const CAT_ICONS: Record<string, LucideIcon> = {
-  chave: Wrench,
-  broca: Drill,
-  correia: Cog,
-  disco: Disc3,
-  alicate: Scissors,
-  eletrodo: Zap,
-  bota: Footprints,
-  martelo: Hammer,
+  ferramentas: Wrench,
+  transmissao: Cog,
+  pecas: Boxes,
+  ferragens: Anvil,
+  maquinas: Drill,
+  fixacao: Bolt,
+  abrasivos: Disc3,
+  seguranca: HardHat,
+  "solda-elet": Zap,
+  oxicorte: Flame,
+  "solda-arame": Cable,
+  eletrica: Plug,
+  adesivos: Sticker,
+  quimicos: Droplets,
 };
 
 export const revalidate = 60;
@@ -48,14 +60,14 @@ export default async function HomePage() {
   // produtos). Vendas no site ainda são poucas p/ ranquear por "mais vendidas".
   // Edite esta lista pra trocar quais categorias aparecem.
   const CATEGORIAS_DESTAQUE = [
-    "chave",
-    "broca",
-    "correia",
-    "disco",
-    "alicate",
-    "eletrodo",
-    "bota",
-    "martelo",
+    "ferramentas",
+    "transmissao",
+    "pecas",
+    "ferragens",
+    "maquinas",
+    "fixacao",
+    "abrasivos",
+    "seguranca",
   ];
   const catBySlug = new Map(categorias.map((c) => [c.slug, c]));
   const curadas = CATEGORIAS_DESTAQUE.map((s) => catBySlug.get(s)).filter(
