@@ -49,7 +49,7 @@ export function AddToCartBlock({ produto }: { produto: ProdutoComMarca }) {
         <button
           type="button"
           onClick={() => setQty((q) => Math.max(1, q - 1))}
-          className="w-9 py-2.5 text-white/80 hover:text-white"
+          className="w-11 py-3 text-white/80 hover:text-white md:w-9 md:py-2.5"
         >
           −
         </button>
@@ -61,12 +61,12 @@ export function AddToCartBlock({ produto }: { produto: ProdutoComMarca }) {
               Math.max(1, Math.min(produto.estoque, Number(e.target.value) || 1)),
             )
           }
-          className="w-12 bg-transparent text-center font-bold text-white outline-none"
+          className="w-14 bg-transparent text-center font-bold text-white outline-none md:w-12"
         />
         <button
           type="button"
           onClick={() => setQty((q) => Math.min(produto.estoque, q + 1))}
-          className="w-9 py-2.5 text-white/80 hover:text-white"
+          className="w-11 py-3 text-white/80 hover:text-white md:w-9 md:py-2.5"
         >
           +
         </button>

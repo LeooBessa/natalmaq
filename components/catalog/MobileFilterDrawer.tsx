@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { SlidersHorizontal, X } from "lucide-react";
 import type { Categoria, Marca } from "@/types";
@@ -35,6 +35,16 @@ export function MobileFilterDrawer({ categorias, marcas, sp, totalAtivos }: Prop
   const [open, setOpen] = useState(false);
   const em_estoque = sp.estoque === "1";
   const promocao = sp.promocao === "1";
+
+  // Trava o scroll do body enquanto o drawer está aberto (evita scroll-bleed).
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   return (
     <>
@@ -171,7 +181,7 @@ function DrawerLink({
     <Link
       href={href as never}
       onClick={onClick}
-      className={`flex items-center gap-2 py-1.5 text-[13px] ${
+      className={`flex items-center gap-2.5 py-2.5 text-[13px] ${
         checked ? "font-semibold text-navy" : "text-ink hover:text-brand-500"
       }`}
     >

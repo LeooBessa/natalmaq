@@ -138,9 +138,9 @@ function MiniCard({ produto }: { produto: ProdutoComMarca }) {
             onClick={handleAdd}
             disabled={!inStock}
             aria-label={`Adicionar ${produto.nome} ao carrinho`}
-            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-navy bg-white text-navy transition hover:bg-navy hover:text-white disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-ink-2"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-navy bg-white text-navy transition hover:bg-navy hover:text-white disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-ink-2 md:h-6 md:w-6"
           >
-            <Plus className="h-3 w-3" strokeWidth={3} />
+            <Plus className="h-4 w-4 md:h-3 md:w-3" strokeWidth={3} />
           </button>
         </div>
       </div>

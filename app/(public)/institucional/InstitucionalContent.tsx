@@ -182,7 +182,7 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
           />
 
           {/* content */}
-          <div className="relative z-10 mx-auto w-full max-w-[1280px] px-6 pb-28 pt-36 text-center">
+          <div className="relative z-10 mx-auto w-full max-w-[1280px] px-4 md:px-6 pb-28 pt-36 text-center">
             <p
               className="font-mono text-[11px] uppercase tracking-mono text-brand-400"
               style={{ animation: "fadeUp 0.7s ease 0.35s both" }}
@@ -226,7 +226,7 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
 
         {/* ── SOBRE ────────────────────────────────────────────── */}
         <section className="bg-white py-20 md:py-28">
-          <div className="mx-auto max-w-[1280px] px-6">
+          <div className="mx-auto max-w-[1280px] px-4 md:px-6">
             <Reveal>
               <PillBadge>Quem somos</PillBadge>
               <h2 className="mt-4 font-display text-[clamp(26px,3.5vw,44px)] leading-[1.05] tracking-tight text-ink">
@@ -313,7 +313,7 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
 
         {/* ── STATS ────────────────────────────────────────────── */}
         <section className="bg-navy">
-          <div className="mx-auto max-w-[1280px] px-6 py-16">
+          <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-16">
             <div className="grid grid-cols-2 gap-px bg-white/[0.06] md:grid-cols-4">
               {[
                 { end: 2400,  label: "M² DE GALPÃO",     suffix: "+" },
@@ -336,7 +336,7 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
 
         {/* ── SOLUÇÕES ─────────────────────────────────────────── */}
         <section className="py-20 md:py-28">
-          <div className="mx-auto max-w-[1280px] px-6">
+          <div className="mx-auto max-w-[1280px] px-4 md:px-6">
             <Reveal className="text-center">
               <PillBadge>O que oferecemos</PillBadge>
               <h2 className="mt-4 font-display text-[clamp(26px,3.5vw,44px)] leading-[1.05] tracking-tight text-ink">
@@ -414,7 +414,7 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
 
         {/* ── GALERIA ──────────────────────────────────────────── */}
         <section className="bg-navy py-20 md:py-28">
-          <div className="mx-auto max-w-[1280px] px-6">
+          <div className="mx-auto max-w-[1280px] px-4 md:px-6">
             <Reveal>
               <PillBadge>Nossa estrutura</PillBadge>
               <h2 className="mt-4 font-display text-[clamp(26px,3.5vw,44px)] leading-[1.05] tracking-tight text-white">
@@ -481,7 +481,7 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
 
         {/* ── CONTATO ──────────────────────────────────────────── */}
         <section className="bg-navy py-20 text-white">
-          <div className="mx-auto max-w-[1280px] px-6">
+          <div className="mx-auto max-w-[1280px] px-4 md:px-6">
             <Reveal>
               <PillBadge>Fale conosco</PillBadge>
               <h2 className="mt-4 font-display text-[clamp(26px,3.5vw,44px)] leading-[1.05] tracking-tight text-white">
@@ -567,7 +567,10 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
         <ArticlesCarousel articles={artigos} />
 
       </div>
-      <WhatsAppFloat />
+      {/* No mobile o float global do layout cobre todas as páginas; aqui só desktop. */}
+      <div className="hidden md:block">
+        <WhatsAppFloat />
+      </div>
     </>
   );
 }

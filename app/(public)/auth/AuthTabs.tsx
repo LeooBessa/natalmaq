@@ -232,8 +232,8 @@ function CadastroForm({ next }: { next: string }) {
     <form onSubmit={submit} className="space-y-4">
       <input type="hidden" name="next" value={next} />
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
           <label className={labelCls}>Nome completo *</label>
           <input name="nome" type="text" required autoComplete="name" className={inputCls} />
         </div>
@@ -281,7 +281,7 @@ function CadastroForm({ next }: { next: string }) {
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
           Endereço
         </p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className={labelCls}>CEP</label>
             <input
@@ -297,7 +297,7 @@ function CadastroForm({ next }: { next: string }) {
             <label className={labelCls}>Número</label>
             <input name="numero" type="text" value={undefined} className={inputCls} />
           </div>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <label className={labelCls}>Rua / Logradouro</label>
             <input
               name="rua"

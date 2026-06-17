@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
 
@@ -105,16 +106,20 @@ export default async function ArticlePage({ params }: PageProps) {
       <JsonLd data={jsonLd} />
       {/* Hero — só imagem */}
       <header className="relative h-[260px] w-full overflow-hidden bg-navy md:h-[560px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={article.image}
-          alt={article.imageAlt || article.title}
-          className="absolute inset-0 h-full w-full object-cover object-[50%_40%]"
-        />
+        {article.image && (
+          <Image
+            src={article.image}
+            alt={article.imageAlt || article.title}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[50%_40%]"
+          />
+        )}
       </header>
 
       {/* Corpo */}
-      <div className="mx-auto max-w-3xl px-6 py-14 md:py-20">
+      <div className="mx-auto max-w-3xl px-4 md:px-6 py-14 md:py-20">
         <span className="mb-4 inline-block border border-brand-500/50 px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-mono text-brand-500">
           {article.category}
         </span>
@@ -132,7 +137,7 @@ export default async function ArticlePage({ params }: PageProps) {
           </span>
         </div>
 
-        <p className="mb-10 text-xl leading-relaxed text-ink-2 md:text-2xl">
+        <p className="mb-10 text-lg leading-relaxed text-ink-2 md:text-2xl">
           {article.excerpt}
         </p>
 
@@ -153,7 +158,7 @@ export default async function ArticlePage({ params }: PageProps) {
                 {block.items.map((item, j) => (
                   <li
                     key={j}
-                    className="flex gap-3 text-lg leading-relaxed text-ink/80 md:text-xl"
+                    className="flex gap-3 text-base leading-relaxed text-ink/80 md:text-xl"
                   >
                     <span className="mt-2.5 h-2 w-2 flex-shrink-0 rounded-full bg-brand-500" />
                     <span>{item}</span>
@@ -163,7 +168,7 @@ export default async function ArticlePage({ params }: PageProps) {
             );
           }
           return (
-            <p key={i} className="mb-5 text-lg leading-relaxed text-ink/80 md:text-xl">
+            <p key={i} className="mb-5 text-base leading-relaxed text-ink/80 md:text-xl">
               {block.text}
             </p>
           );
@@ -185,7 +190,7 @@ export default async function ArticlePage({ params }: PageProps) {
                     <h3 className="mb-1 font-display text-lg tracking-tight text-ink">
                       {step.name}
                     </h3>
-                    <p className="text-lg leading-relaxed text-ink/80 md:text-xl">
+                    <p className="text-base leading-relaxed text-ink/80 md:text-xl">
                       {step.text}
                     </p>
                   </div>
@@ -207,7 +212,7 @@ export default async function ArticlePage({ params }: PageProps) {
                   <h3 className="mb-2 font-display text-lg tracking-tight text-ink">
                     {item.question}
                   </h3>
-                  <p className="text-lg leading-relaxed text-ink/80 md:text-xl">
+                  <p className="text-base leading-relaxed text-ink/80 md:text-xl">
                     {item.answer}
                   </p>
                 </div>

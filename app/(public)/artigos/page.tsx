@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { listArtigos } from "@/lib/conteudo";
@@ -37,7 +38,7 @@ export default async function ArtigosIndexPage() {
       <JsonLd data={jsonLd} />
       {/* Header */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-10">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-10">
           <div className="font-mono text-[11px] uppercase tracking-mono text-ink-2">
             NATALMAQ / ARTIGOS
           </div>
@@ -51,7 +52,7 @@ export default async function ArtigosIndexPage() {
       </div>
 
       {/* Grid */}
-      <div className="mx-auto max-w-[1280px] px-6 py-10">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-10">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {articles.map((article) => (
             <Link
@@ -60,12 +61,15 @@ export default async function ArtigosIndexPage() {
               className="group flex flex-col overflow-hidden border border-line bg-white transition hover:shadow-[0_4px_20px_rgba(10,22,40,0.10)]"
             >
               <div className="relative aspect-[16/10] overflow-hidden bg-navy">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="h-full w-full object-cover object-[50%_40%] transition duration-500 group-hover:scale-105"
-                />
+                {article.image && (
+                  <Image
+                    src={article.image}
+                    alt={article.title}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover object-[50%_40%] transition duration-500 group-hover:scale-105"
+                  />
+                )}
                 <span className="absolute left-3 top-3 border border-brand-500/50 bg-navy/50 px-2 py-0.5 font-mono text-[10px] uppercase tracking-mono text-brand-400 backdrop-blur-sm">
                   {article.category}
                 </span>

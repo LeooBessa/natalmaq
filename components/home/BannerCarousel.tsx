@@ -17,7 +17,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
 
   if (banners.length === 0) {
     return (
-      <div className="flex h-[420px] w-full items-center justify-center border-b border-line bg-navy-800 md:h-[520px]">
+      <div className="flex h-[260px] w-full items-center justify-center border-b border-line bg-navy-800 sm:h-[340px] md:h-[520px]">
         <div className="text-center">
           <div className="font-mono text-[11px] uppercase tracking-mono text-white/40">
             ESPAÇO PARA BANNERS
@@ -50,7 +50,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
 
       <Wrap
         href={(banner.link ?? "/catalogo") as never}
-        className="group relative block h-[420px] w-full md:h-[520px]"
+        className="group relative block h-[260px] w-full sm:h-[340px] md:h-[520px]"
         aria-label={banner.titulo ?? "Banner"}
       >
         {isArtigo && (
@@ -78,9 +78,13 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
             <button
               key={i}
               onClick={() => setIdx(i)}
-              className={`h-2 transition-all ${i === idx ? "w-6 bg-brand-500" : "w-2 bg-white/50 hover:bg-white/80"}`}
               aria-label={`Banner ${i + 1}`}
-            />
+              className="group flex items-center py-3 -my-3"
+            >
+              <span
+                className={`block h-2 transition-all ${i === idx ? "w-6 bg-brand-500" : "w-2 bg-white/50 group-hover:bg-white/80"}`}
+              />
+            </button>
           ))}
         </div>
       )}

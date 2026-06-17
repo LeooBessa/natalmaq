@@ -178,7 +178,7 @@ export function CheckoutForm({ userId, cliente }: Props) {
   return (
     <div className="bg-bone">
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-6">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-6">
           <div className="font-mono text-[11px] uppercase tracking-mono text-ink-2">
             NATALMAQ / FINALIZAR ORÇAMENTO
           </div>
@@ -188,10 +188,10 @@ export function CheckoutForm({ userId, cliente }: Props) {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-[1280px] gap-6 px-6 py-8 lg:grid-cols-[1fr_380px]">
+      <div className="mx-auto grid max-w-[1280px] gap-6 px-4 md:px-6 py-8 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           {!cliente && (
-            <div className="flex items-center justify-between border border-line bg-white px-5 py-3">
+            <div className="flex flex-col gap-2 border border-line bg-white px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm text-ink-2">
                 Você está logado. Preencha seus dados abaixo ou{" "}
                 <Link href="/minha-conta" className="text-brand-500 underline hover:text-brand-400">
@@ -201,7 +201,7 @@ export function CheckoutForm({ userId, cliente }: Props) {
               </span>
               <Link
                 href="/minha-conta"
-                className="ml-4 shrink-0 font-mono text-[11px] uppercase tracking-mono text-ink-2 hover:text-ink"
+                className="shrink-0 font-mono text-[11px] uppercase tracking-mono text-ink-2 hover:text-ink sm:ml-4"
               >
                 Minha conta →
               </Link>
@@ -479,6 +479,33 @@ export function CheckoutForm({ userId, cliente }: Props) {
             Criamos seu orçamento e abrimos o WhatsApp para confirmar com a equipe.
           </p>
         </aside>
+      </div>
+
+      {/* Rodapé fixo (mobile) */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white shadow-[0_-4px_16px_rgba(10,22,40,0.10)] md:hidden">
+        {erro && (
+          <p className="border-b border-brand-500/30 bg-brand-500/10 px-4 py-2 text-center text-[12px] text-brand-700">
+            {erro}
+          </p>
+        )}
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="shrink-0">
+            <div className="font-mono text-[10px] uppercase tracking-mono text-ink-2">
+              Total
+            </div>
+            <div className="font-display text-[22px] leading-none text-ink">
+              {formatBRL(total)}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={finalizar}
+            disabled={submit || !podeEnviar}
+            className="flex flex-1 items-center justify-center bg-brand-500 py-3.5 font-mono text-[12px] font-bold uppercase tracking-mono text-white transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {submit ? "Enviando..." : "Finalizar via WhatsApp →"}
+          </button>
+        </div>
       </div>
     </div>
   );

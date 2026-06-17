@@ -61,7 +61,7 @@ export default async function ProdutoPage({
       <JsonLd data={jsonLd} />
       {/* Breadcrumb */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-4 font-mono text-[11px] uppercase tracking-mono text-ink-2">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-4 font-mono text-[11px] uppercase tracking-mono text-ink-2">
           <Link href="/" className="hover:text-brand-500">
             NATALMAQ
           </Link>
@@ -85,7 +85,7 @@ export default async function ProdutoPage({
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-[1280px] gap-8 px-6 py-10 md:grid-cols-[1.1fr_1fr]">
+      <div className="mx-auto grid max-w-[1280px] gap-8 px-4 md:px-6 py-10 md:grid-cols-[1.1fr_1fr]">
         {/* Gallery */}
         <div>
           <ProdutoGallery
@@ -123,7 +123,7 @@ export default async function ProdutoPage({
 
       {produto.complementares_produtos.length > 0 && (
         <section className="bg-bone py-14">
-          <div className="mx-auto max-w-[1280px] px-6">
+          <div className="mx-auto max-w-[1280px] px-4 md:px-6">
             <div className="mb-6 font-mono text-[11px] uppercase tracking-mono text-brand-500">
               COMPLETE SUA COMPRA
             </div>

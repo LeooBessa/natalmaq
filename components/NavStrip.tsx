@@ -20,21 +20,29 @@ type Open = "cats" | "marcas" | null;
  */
 export function NavStrip({ categorias, marcas }: Props) {
   const [open, setOpen] = useState<Open>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   // Fecha ao mudar de rota (NavStrip vive no layout, sobrevive a navegações).
   useEffect(() => {
     setOpen(null);
+    setMobileOpen(false);
   }, [pathname]);
 
   // Fecha ao clicar fora ou ao pressionar Esc.
   useEffect(() => {
     function onClick(e: MouseEvent) {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(null);
+      if (!wrapRef.current?.contains(e.target as Node)) {
+        setOpen(null);
+        setMobileOpen(false);
+      }
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(null);
+      if (e.key === "Escape") {
+        setOpen(null);
+        setMobileOpen(false);
+      }
     }
     window.addEventListener("click", onClick);
     window.addEventListener("keydown", onKey);
@@ -46,7 +54,7 @@ export function NavStrip({ categorias, marcas }: Props) {
 
   return (
     <div ref={wrapRef} className="relative bg-navy-800 text-white">
-      <div className="mx-auto flex max-w-[1280px] items-stretch overflow-x-auto">
+      <div className="mx-auto hidden max-w-[1280px] items-stretch overflow-x-auto md:flex">
         {/* Todas as categorias — mega-menu */}
         <button
           type="button"
@@ -107,6 +115,21 @@ export function NavStrip({ categorias, marcas }: Props) {
         </NavLink>
       </div>
 
+      {/* Hambúrguer (mobile) */}
+      <button
+        type="button"
+        onClick={() => setMobileOpen((v) => !v)}
+        aria-expanded={mobileOpen}
+        className="flex w-full items-center gap-2.5 bg-brand-500 px-4 py-3.5 text-[13px] font-extrabold uppercase tracking-wide text-white md:hidden"
+      >
+        <Menu className="h-4 w-4" strokeWidth={2.5} />
+        Categorias e marcas
+        <ChevronDown
+          className={`ml-auto h-4 w-4 transition ${mobileOpen ? "rotate-180" : ""}`}
+          strokeWidth={2.5}
+        />
+      </button>
+
       {/* Dropdowns */}
       {open === "cats" && (
         <CategoriasMenu
@@ -116,6 +139,15 @@ export function NavStrip({ categorias, marcas }: Props) {
       )}
       {open === "marcas" && (
         <MarcasMenu marcas={marcas} onClose={() => setOpen(null)} />
+      )}
+
+      {/* Painel mobile (hambúrguer) */}
+      {mobileOpen && (
+        <MobileMenu
+          categorias={categorias}
+          marcas={marcas}
+          onClose={() => setMobileOpen(false)}
+        />
       )}
     </div>
   );
@@ -236,6 +268,106 @@ function MarcasMenu({
         ))}
       </div>
     </Dropdown>
+  );
+}
+
+// ─── Painel mobile (hambúrguer) ───────────────────────────────
+function MobileMenu({
+  categorias,
+  marcas,
+  onClose,
+}: {
+  categorias: Categoria[];
+  marcas: Marca[];
+  onClose: () => void;
+}) {
+  return (
+    <div className="absolute left-0 right-0 top-full z-50 max-h-[75vh] overflow-y-auto border-b border-line bg-white text-ink shadow-[0_8px_32px_rgba(10,22,40,0.18)] md:hidden">
+      {/* Atalhos */}
+      <div className="border-b border-line">
+        <MobileLink href="/catalogo?estoque=1" icon={<Package className="h-4 w-4" />} onClose={onClose}>
+          Em estoque
+        </MobileLink>
+        <MobileLink href="/catalogo?promocao=1" icon={<Tag className="h-4 w-4" />} onClose={onClose}>
+          Promoções
+        </MobileLink>
+        <MobileLink href="/institucional" icon={<Info className="h-4 w-4" />} onClose={onClose}>
+          Sobre
+        </MobileLink>
+      </div>
+
+      {/* Categorias */}
+      {categorias.length > 0 && (
+        <div className="px-4 py-3">
+          <p className="mb-1 font-mono text-[11px] uppercase tracking-mono text-ink-2">
+            Categorias
+          </p>
+          <div className="grid grid-cols-2 gap-x-4">
+            {categorias.map((c) => (
+              <Link
+                key={c.id}
+                href={`/catalogo?categoria=${c.slug}` as never}
+                onClick={onClose}
+                className="block border-b border-line/60 py-3 text-sm text-ink"
+              >
+                {c.nome}
+              </Link>
+            ))}
+          </div>
+          <Link
+            href="/catalogo"
+            onClick={onClose}
+            className="mt-3 block py-1 font-mono text-[11px] uppercase tracking-mono text-brand-600"
+          >
+            Ver catálogo completo →
+          </Link>
+        </div>
+      )}
+
+      {/* Marcas */}
+      {marcas.length > 0 && (
+        <div className="border-t border-line px-4 py-3">
+          <p className="mb-1 font-mono text-[11px] uppercase tracking-mono text-ink-2">
+            Marcas
+          </p>
+          <div className="grid grid-cols-2 gap-x-4">
+            {marcas.map((m) => (
+              <Link
+                key={m.id}
+                href={`/marca/${m.slug}` as never}
+                onClick={onClose}
+                className="block border-b border-line/60 py-3 text-sm text-ink"
+              >
+                {m.nome}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MobileLink({
+  href,
+  icon,
+  children,
+  onClose,
+}: {
+  href: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <Link
+      href={href as never}
+      onClick={onClose}
+      className="flex items-center gap-2.5 px-4 py-3.5 text-sm font-medium text-ink hover:bg-bone"
+    >
+      {icon}
+      {children}
+    </Link>
   );
 }
 

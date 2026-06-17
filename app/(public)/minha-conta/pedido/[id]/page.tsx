@@ -62,7 +62,7 @@ export default async function PedidoDetalhePage({
     <div className="min-h-[80vh] bg-bone">
       {/* Header */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-6">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-6">
           <div className="font-mono text-[11px] uppercase tracking-mono text-ink-2">
             <Link href="/minha-conta" className="hover:text-ink">
               MINHA CONTA
@@ -91,7 +91,7 @@ export default async function PedidoDetalhePage({
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-[1280px] gap-6 px-6 py-8 lg:grid-cols-[1fr_300px]">
+      <div className="mx-auto grid max-w-[1280px] gap-6 px-4 md:px-6 py-8 lg:grid-cols-[1fr_300px]">
         {/* Itens */}
         <div>
           <div className="mb-3 font-mono text-[11px] font-bold uppercase tracking-mono text-ink">

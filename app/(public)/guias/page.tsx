@@ -47,7 +47,7 @@ export default async function GuiasIndexPage() {
 
       {/* Header */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-10">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-10">
           <div className="font-mono text-[11px] uppercase tracking-mono text-ink-2">
             NATALMAQ / GUIAS
           </div>
@@ -62,7 +62,7 @@ export default async function GuiasIndexPage() {
       </div>
 
       {/* Grid de pillars */}
-      <div className="mx-auto max-w-[1280px] px-6 py-10">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-10">
         {clusters.length === 0 ? (
           <div className="border border-line bg-white px-6 py-16 text-center">
             <div className="font-mono text-[11px] uppercase tracking-mono text-ink-2">

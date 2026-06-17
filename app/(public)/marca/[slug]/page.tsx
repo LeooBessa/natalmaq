@@ -23,7 +23,7 @@ export default async function MarcaPage({
   return (
     <div className="bg-bone">
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-6">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-6">
           <div className="font-mono text-[11px] uppercase tracking-mono text-ink-2">
             NATALMAQ / MARCA / {marca.nome.toUpperCase()}
           </div>
@@ -36,7 +36,7 @@ export default async function MarcaPage({
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1280px] px-6 py-8">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-8">
         {produtos.items.length === 0 ? (
           <div className="border border-dashed border-line bg-white p-16 text-center font-mono text-[12px] uppercase tracking-mono text-ink-2">
             Nenhum produto cadastrado para esta marca.

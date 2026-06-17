@@ -46,7 +46,7 @@ export default async function MinhaContaPage() {
     <div className="min-h-[80vh] bg-bone">
       {/* Header */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-6">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-6">
           <div className="font-mono text-[11px] uppercase tracking-mono text-ink-2">
             NATALMAQ / MINHA CONTA
           </div>
@@ -59,7 +59,7 @@ export default async function MinhaContaPage() {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-[1280px] gap-6 px-6 py-8 lg:grid-cols-[320px_1fr]">
+      <div className="mx-auto grid max-w-[1280px] gap-6 px-4 md:px-6 py-8 lg:grid-cols-[320px_1fr]">
         {/* Perfil */}
         <section className="h-fit border border-line bg-white p-6">
           <div className="mb-4 font-mono text-[11px] font-bold uppercase tracking-mono text-ink">

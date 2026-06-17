@@ -17,7 +17,7 @@ export default function CarrinhoPage() {
     <div className="bg-bone">
       {/* Header */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-6">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-6">
           <div className="font-mono text-[11px] uppercase tracking-mono text-ink-2">
             NATALMAQ / SOLICITAÇÃO DE ORÇAMENTO
           </div>
@@ -41,7 +41,7 @@ export default function CarrinhoPage() {
 
       <CartRecommendations />
 
-      <div className="mx-auto max-w-[1280px] px-6 py-8">
+      <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-8">
         {itens.length === 0 ? (
           <div className="border border-dashed border-line bg-white p-16 text-center">
             <div className="font-mono text-[12px] uppercase tracking-mono text-ink-2">
@@ -98,7 +98,7 @@ export default function CarrinhoPage() {
                             setQuantidade(it.produto_id, it.quantidade - 1)
                           }
                           disabled={it.quantidade <= 1}
-                          className="w-8 py-1.5 text-ink-2 hover:bg-bone disabled:cursor-not-allowed disabled:opacity-40"
+                          className="w-10 py-2.5 text-ink-2 hover:bg-bone disabled:cursor-not-allowed disabled:opacity-40 md:w-8 md:py-1.5"
                         >
                           −
                         </button>
@@ -111,14 +111,14 @@ export default function CarrinhoPage() {
                               Math.max(1, Math.min(it.estoque, Number(e.target.value) || 1)),
                             )
                           }
-                          className="w-10 bg-transparent text-center font-mono text-sm font-bold text-ink outline-none"
+                          className="w-12 bg-transparent text-center font-mono text-sm font-bold text-ink outline-none md:w-10"
                         />
                         <button
                           onClick={() =>
                             setQuantidade(it.produto_id, it.quantidade + 1)
                           }
                           disabled={it.quantidade >= it.estoque}
-                          className="w-8 py-1.5 text-ink-2 hover:bg-bone disabled:cursor-not-allowed disabled:opacity-40"
+                          className="w-10 py-2.5 text-ink-2 hover:bg-bone disabled:cursor-not-allowed disabled:opacity-40 md:w-8 md:py-1.5"
                         >
                           +
                         </button>
@@ -180,6 +180,26 @@ export default function CarrinhoPage() {
           </div>
         )}
       </div>
+
+      {/* Rodapé fixo (mobile) */}
+      {itens.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t border-line bg-white px-4 py-3 shadow-[0_-4px_16px_rgba(10,22,40,0.10)] md:hidden">
+          <div className="shrink-0">
+            <div className="font-mono text-[10px] uppercase tracking-mono text-ink-2">
+              Total estimado
+            </div>
+            <div className="font-display text-[22px] leading-none text-ink">
+              {formatBRL(total)}
+            </div>
+          </div>
+          <Link
+            href="/checkout"
+            className="flex flex-1 items-center justify-center bg-brand-500 py-3.5 font-mono text-[12px] font-bold uppercase tracking-mono text-white hover:bg-brand-400"
+          >
+            Continuar pedido →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { ZoomIn } from "lucide-react";
 
@@ -52,12 +53,14 @@ export function ProdutoGallery({ imagens, nome, codigo }: Props) {
           className="group relative aspect-square cursor-zoom-in overflow-hidden border border-line bg-white"
           onClick={() => setLightbox(true)}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             key={ativa}
             src={imagens[ativa]}
             alt={`${nome} — imagem ${ativa + 1}`}
-            className="h-full w-full object-contain p-6 transition duration-300 group-hover:scale-[1.04]"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-contain p-6 transition duration-300 group-hover:scale-[1.04]"
           />
           <div className="absolute right-3 top-3 rounded-full bg-white/80 p-1.5 text-ink-2 opacity-0 transition group-hover:opacity-100">
             <ZoomIn className="h-4 w-4" />
@@ -87,11 +90,12 @@ export function ProdutoGallery({ imagens, nome, codigo }: Props) {
                 }`}
                 aria-label={`Ver imagem ${i + 1}`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={src}
                   alt=""
-                  className="h-full w-full object-contain p-1"
+                  fill
+                  sizes="64px"
+                  className="object-contain p-1"
                 />
               </button>
             ))}

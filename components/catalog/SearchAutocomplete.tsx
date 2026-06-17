@@ -159,7 +159,7 @@ export function SearchAutocomplete() {
         <div
           ref={listRef}
           role="listbox"
-          className="absolute left-0 right-0 z-50 mt-1 max-h-96 overflow-auto border border-line bg-white shadow-[0_8px_24px_rgba(10,22,40,0.12)]"
+          className="absolute left-0 right-0 z-50 mt-1 max-h-[60vh] overflow-auto border border-line bg-white shadow-[0_8px_24px_rgba(10,22,40,0.12)] md:max-h-96"
         >
           <div className="border-b border-line px-4 py-2 font-mono text-[10px] uppercase tracking-mono text-ink-2">
             {loading

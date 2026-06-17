@@ -45,7 +45,7 @@ export default async function CatalogoPage({
     <div className="bg-bone">
       {/* Breadcrumb header */}
       <div className="border-b border-line bg-white">
-        <div className="mx-auto max-w-[1280px] px-6 py-6">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6 py-6">
           <div className="font-mono text-[11px] uppercase tracking-mono text-ink-2">
             NATALMAQ / CATÁLOGO
             {catAtual && ` / ${catAtual.nome.toUpperCase()}`}

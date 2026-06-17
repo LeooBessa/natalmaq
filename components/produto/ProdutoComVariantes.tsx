@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Check } from "lucide-react";
 
 import { AddToCartBlock } from "@/components/produto/AddToCartBlock";
+import { useCart } from "@/lib/cart-store";
 import { formatBRL } from "@/lib/format";
 import type { ProdutoComMarca } from "@/types";
 
@@ -23,6 +25,24 @@ export function ProdutoComVariantes({ produto, variantes }: Props) {
     atual.preco_promocional && atual.preco_promocional < atual.preco;
   const inStock = atual.estoque > 0;
 
+  const addItem = useCart((s) => s.addItem);
+  const [stickyAdded, setStickyAdded] = useState(false);
+  function addSticky() {
+    addItem({
+      produto_id: atual.id,
+      codigo: atual.codigo,
+      slug: atual.slug,
+      nome: atual.nome,
+      imagem: atual.imagens?.[0] ?? null,
+      preco_unit: Number(preco),
+      quantidade: 1,
+      estoque: atual.estoque,
+      peso_kg: Number(atual.peso_kg ?? 0),
+    });
+    setStickyAdded(true);
+    setTimeout(() => setStickyAdded(false), 2000);
+  }
+
   const range = useMemo(() => {
     if (opcoes.length < 2) return null;
     const precos = opcoes.map((o) => Number(o.preco_promocional ?? o.preco));
@@ -30,6 +50,7 @@ export function ProdutoComVariantes({ produto, variantes }: Props) {
   }, [opcoes]);
 
   return (
+    <>
     <div className="flex flex-col gap-5">
       {atual.marca?.nome && (
         <Link
@@ -137,5 +158,41 @@ export function ProdutoComVariantes({ produto, variantes }: Props) {
         <p className="leading-relaxed text-ink-2">{atual.descricao}</p>
       )}
     </div>
+
+      {/* CTA fixo (mobile) — reflete a variante selecionada */}
+      <div className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t border-line bg-white px-4 py-3 shadow-[0_-4px_16px_rgba(10,22,40,0.10)] md:hidden">
+        <div className="shrink-0">
+          <div className="font-mono text-[10px] uppercase tracking-mono text-ink-2">
+            À vista
+          </div>
+          <div className="font-display text-[22px] leading-none text-ink">
+            {formatBRL(preco)}
+          </div>
+        </div>
+        {inStock ? (
+          <button
+            type="button"
+            onClick={addSticky}
+            className="flex flex-1 items-center justify-center gap-2 bg-brand-500 py-3.5 font-mono text-[12px] font-bold uppercase tracking-mono text-white transition hover:bg-brand-400"
+          >
+            {stickyAdded ? (
+              <>
+                <Check className="h-4 w-4" /> Adicionado
+              </>
+            ) : (
+              <>+ Adicionar ao orçamento</>
+            )}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="flex-1 cursor-not-allowed bg-zinc-100 py-3.5 font-mono text-[12px] font-bold uppercase tracking-mono text-zinc-400"
+          >
+            Indisponível
+          </button>
+        )}
+      </div>
+    </>
   );
 }

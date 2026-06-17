@@ -100,7 +100,7 @@ export default async function GuiaPillarPage({ params }: PageProps) {
 
       {/* Hero */}
       <header className="border-b border-line bg-navy">
-        <div className="mx-auto max-w-3xl px-6 py-14 md:py-20">
+        <div className="mx-auto max-w-3xl px-4 md:px-6 py-14 md:py-20">
           <div className="font-mono text-[11px] uppercase tracking-mono text-brand-400">
             NATALMAQ / GUIA COMPLETO
           </div>
@@ -116,7 +116,7 @@ export default async function GuiaPillarPage({ params }: PageProps) {
       </header>
 
       {/* Corpo */}
-      <div className="mx-auto max-w-3xl px-6 py-14 md:py-16">
+      <div className="mx-auto max-w-3xl px-4 md:px-6 py-14 md:py-16">
         {cluster.intro && (
           <p className="text-lg leading-relaxed text-ink/80 md:text-xl">
             {cluster.intro}

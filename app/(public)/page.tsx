@@ -86,13 +86,13 @@ export default async function HomePage() {
       {/* HERO ─────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-navy text-white">
         <div className="absolute inset-0 bg-hatch-orange" />
-        <div className="relative mx-auto flex max-w-[1280px] flex-col items-center px-6 py-20 text-center md:py-28">
+        <div className="relative mx-auto flex max-w-[1280px] flex-col items-center px-4 md:px-6 py-12 text-center md:py-28">
           <div className="mb-6 flex items-center gap-3 font-mono text-[11px] uppercase tracking-mono text-brand-400">
             <span className="block h-px w-8 bg-brand-500" />
             EDIÇÃO 2026 · CATÁLOGO INDUSTRIAL
             <span className="block h-px w-8 bg-brand-500" />
           </div>
-          <h1 className="font-display text-[42px] leading-[0.95] tracking-tight md:text-[64px] lg:text-[76px]">
+          <h1 className="font-display text-[34px] leading-[0.95] tracking-tight sm:text-[42px] md:text-[64px] lg:text-[76px]">
             FERRAMENTAS
             <br />
             QUE <span className="text-brand-500">NÃO PARAM</span>
@@ -123,8 +123,8 @@ export default async function HomePage() {
 
       {/* CATEGORIAS ───────────────────────────────────────── */}
       {catTop.length > 0 && (
-        <section className="border-b border-line bg-bone py-16">
-          <div className="mx-auto max-w-[1280px] px-6">
+        <section className="border-b border-line bg-bone py-10 md:py-16">
+          <div className="mx-auto max-w-[1280px] px-4 md:px-6">
             <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <h2 className="font-display text-[32px] leading-[0.95] tracking-tight text-ink md:text-[44px]">
@@ -166,8 +166,8 @@ export default async function HomePage() {
       )}
 
       {/* DESTAQUES ────────────────────────────────────────── */}
-      <section className="bg-white py-16">
-        <div className="mx-auto max-w-[1280px] px-6">
+      <section className="bg-white py-10 md:py-16">
+        <div className="mx-auto max-w-[1280px] px-4 md:px-6">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="font-display text-[32px] leading-[0.95] tracking-tight text-ink md:text-[44px]">
@@ -198,8 +198,8 @@ export default async function HomePage() {
 
       {/* MARCAS ───────────────────────────────────────────── */}
       {marcas.length > 0 && (
-        <section className="border-t border-line bg-bone py-16">
-          <div className="mx-auto max-w-[1280px] px-6">
+        <section className="border-t border-line bg-bone py-10 md:py-16">
+          <div className="mx-auto max-w-[1280px] px-4 md:px-6">
             <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
               <h2 className="font-display text-[32px] leading-[0.95] tracking-tight text-ink md:text-[44px]">
                 Marcas Parceiras

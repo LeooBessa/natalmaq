@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export function WhatsAppFloat() {
+export function WhatsAppFloat({ className = "bottom-6 right-6" }: { className?: string }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -13,7 +13,7 @@ export function WhatsAppFloat() {
       aria-label="Falar no WhatsApp"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-3 overflow-hidden rounded-full shadow-lg transition-all duration-300"
+      className={`fixed z-50 flex items-center gap-3 overflow-hidden rounded-full shadow-lg transition-all duration-300 ${className}`}
       style={{
         backgroundColor: "#25D366",
         maxWidth: hovered ? "220px" : "56px",

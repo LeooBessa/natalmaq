@@ -123,7 +123,7 @@ export default async function SolucaoLandingPage({ params }: PageProps) {
             <div className="absolute inset-0 bg-navy/60" />
           </>
         )}
-        <div className="relative mx-auto max-w-3xl px-6 py-16 md:py-24">
+        <div className="relative mx-auto max-w-3xl px-4 md:px-6 py-16 md:py-24">
           {local && (
             <span className="inline-flex items-center gap-1.5 border border-brand-500/50 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-mono text-brand-400">
               <MapPin size={11} />
@@ -153,7 +153,7 @@ export default async function SolucaoLandingPage({ params }: PageProps) {
       </header>
 
       {/* Corpo */}
-      <div className="mx-auto max-w-3xl px-6 py-14 md:py-16">
+      <div className="mx-auto max-w-3xl px-4 md:px-6 py-14 md:py-16">
         {landing.content.map((block, i) => {
           if (block.type === "heading") {
             return (
