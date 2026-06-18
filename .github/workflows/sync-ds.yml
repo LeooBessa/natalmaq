@@ -1,0 +1,57 @@
+name: Sync DS (catálogo)
+
+# Cron EXTERNO do sync DS WEBSERVICE -> Supabase.
+# Motivo: o cron da Vercel (plano Hobby) roda só 1x/dia. Aqui roda várias vezes,
+# em horário comercial (quando o servidor Delphi tende a estar ligado/acessível).
+#
+# Horários em UTC. Natal = UTC-3 (sem horário de verão).
+#   11–22 UTC  ==  08h–19h de Natal
+#
+# Pré-requisito: criar o segredo do repo  SYNC_SECRET
+#   GitHub -> repo -> Settings -> Secrets and variables -> Actions
+#   -> New repository secret -> Name: SYNC_SECRET
+#   -> Value: o mesmo valor de SYNC_SECRET na Vercel (Settings -> Env Variables).
+
+on:
+  schedule:
+    - cron: "17 11-22 * * *"   # incremental, de hora em hora (~08h–19h de Natal)
+    - cron: "40 12 * * *"      # full + detecção de removidos, 1x/dia (~09h40 Natal)
+  workflow_dispatch: {}         # botão "Run workflow" na aba Actions (teste manual)
+
+concurrency:
+  group: sync-ds
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar sync DS
+        env:
+          SECRET: ${{ secrets.SYNC_SECRET }}
+          BASE: "https://natalmaq-main.vercel.app"
+          SCHED: ${{ github.event.schedule }}
+        run: |
+          if [ -z "$SECRET" ]; then
+            echo "::error::Segredo SYNC_SECRET não configurado em Settings -> Secrets -> Actions."
+            exit 1
+          fi
+          # cron diário "40 12 * * *" => full (com varredura de removidos);
+          # demais horários e disparo manual => incremental (leve/resumível).
+          if [ "$SCHED" = "40 12 * * *" ]; then
+            ENDPOINT="/api/sync/ds/full"
+          else
+            ENDPOINT="/api/sync/ds"
+          fi
+          echo "Chamando $BASE$ENDPOINT"
+          code=$(curl -sS -o resp.txt -w "%{http_code}" --max-time 120 \
+            -H "Authorization: Bearer $SECRET" "$BASE$ENDPOINT" || echo "000")
+          echo "HTTP $code"
+          echo "--- resposta ---"; cat resp.txt 2>/dev/null || true; echo
+          case "$code" in
+            200) echo "✓ sync OK" ;;
+            500) echo "::warning::HTTP 500 — provável servidor Delphi indisponível agora; será tentado no próximo horário." ;;
+            401) echo "::error::HTTP 401 — SYNC_SECRET incorreto (não bate com a Vercel)."; exit 1 ;;
+            000) echo "::error::Não alcançou o endpoint (rede/URL)."; exit 1 ;;
+            *)   echo "::error::HTTP $code inesperado."; exit 1 ;;
+          esac
