@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FileDown } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/format";
@@ -90,7 +91,16 @@ export default async function PedidoDetalhePage({
             Criado em {new Date(pedido.criado_em).toLocaleString("pt-BR")}
           </p>
         </div>
-        <StatusBadge status={pedido.status} />
+        <div className="flex items-center gap-3">
+          <a
+            href={`/admin/pedidos/${pedido.id}/pdf`}
+            className="inline-flex items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+          >
+            <FileDown className="h-4 w-4" />
+            Baixar PDF
+          </a>
+          <StatusBadge status={pedido.status} />
+        </div>
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-3">

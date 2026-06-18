@@ -20,7 +20,12 @@ const nextConfig: NextConfig = {
   // não tem OpenJPEG WASM, então perde ~70% das fotos em catálogos
   // profissionais. .next/cache (226MB de webpack) é apagado no
   // buildCommand do vercel.json — sem isso o bundle estoura 250MB.
-  serverExternalPackages: ["pdfjs-dist", "pngjs"],
+  serverExternalPackages: ["pdfjs-dist", "pngjs", "@react-pdf/renderer"],
+  // Garante que a logo usada no PDF do pedido seja incluída no bundle da
+  // função serverless (lida via fs em runtime na rota /admin/pedidos/[id]/pdf).
+  outputFileTracingIncludes: {
+    "/admin/pedidos/[id]/pdf": ["./public/brand/natalmaq-lockup.png"],
+  },
   outputFileTracingExcludes: {
     "*": [
       ".next/cache/**",
