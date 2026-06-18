@@ -80,10 +80,11 @@ export async function listProdutos(params?: {
   if (params?.q) query = query.ilike("nome", `%${params.q}%`);
 
   const { data, count } = await query
-    // Destaques primeiro; depois ordem por id (UUID aleatório) = "embaralhado
-    // estável": variedade de tipos no topo de cada categoria, consistente entre
-    // páginas. Antes era por nome (alfabético), que agrupava itens iguais.
+    // Ordem: (1) destaques; (2) produtos COM foto na frente (coluna gerada
+    // tem_foto — migration 0028); (3) por id (UUID = "embaralhado estável"),
+    // dando variedade de tipos dentro de cada grupo, consistente entre páginas.
     .order("destaque", { ascending: false })
+    .order("tem_foto", { ascending: false })
     .order("id")
     .range(start, end);
 
