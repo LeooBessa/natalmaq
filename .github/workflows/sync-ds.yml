@@ -16,7 +16,16 @@ on:
   schedule:
     - cron: "17 11-22 * * *"   # incremental, de hora em hora (~08h–19h de Natal)
     - cron: "40 12 * * *"      # full + detecção de removidos, 1x/dia (~09h40 Natal)
-  workflow_dispatch: {}         # botão "Run workflow" na aba Actions (teste manual)
+  workflow_dispatch:            # botão "Run workflow" na aba Actions (teste manual)
+    inputs:
+      endpoint:
+        description: "Endpoint (execução manual)"
+        type: choice
+        default: "/api/sync/ds"
+        options:
+          - "/api/sync/ds"
+          - "/api/sync/ds/full"
+          - "/api/sync/ds/probe"
 
 concurrency:
   group: sync-ds
@@ -31,6 +40,7 @@ jobs:
           SECRET: ${{ secrets.SYNC_SECRET }}
           BASE: "https://natalmaq-main.vercel.app"
           SCHED: ${{ github.event.schedule }}
+          INPUT: ${{ inputs.endpoint }}
         run: |
           if [ -z "$SECRET" ]; then
             echo "::error::Segredo SYNC_SECRET não configurado em Settings -> Secrets -> Actions."
@@ -38,7 +48,9 @@ jobs:
           fi
           # cron diário "40 12 * * *" => full (com varredura de removidos);
           # demais horários e disparo manual => incremental (leve/resumível).
-          if [ "$SCHED" = "40 12 * * *" ]; then
+          if [ -n "$INPUT" ]; then
+            ENDPOINT="$INPUT"
+          elif [ "$SCHED" = "40 12 * * *" ]; then
             ENDPOINT="/api/sync/ds/full"
           else
             ENDPOINT="/api/sync/ds"
