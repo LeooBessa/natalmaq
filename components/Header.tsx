@@ -26,20 +26,6 @@ export function Header({ categorias, marcas }: Props) {
 
   return (
     <header className="sticky top-0 z-40">
-      {/* Utility bar — navy, mono */}
-      <div className="hidden bg-navy px-6 py-2 text-[11px] font-medium uppercase tracking-mono text-white/70 md:block">
-        <div className="mx-auto flex max-w-[1280px] items-center justify-between font-mono">
-          <div className="flex items-center gap-6">
-            <span>FROTA PRÓPRIA · ENTREGA EM TODO O RN</span>
-            <span className="text-brand-400">● ATENDIMENTO ATIVO</span>
-          </div>
-          <div className="flex items-center gap-5">
-            <span>(84) 3025-9789</span>
-            <span>VENDAS@NATALMAQ.COM.BR</span>
-          </div>
-        </div>
-      </div>
-
       {/* Main bar — bone, logo + search + cart */}
       <div className="border-b border-line bg-bone">
         <div className="mx-auto flex max-w-[1280px] items-center gap-4 px-4 py-4 md:gap-8 md:px-6">
