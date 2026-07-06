@@ -503,7 +503,7 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
                   {
                     Icon: Phone,
                     label: "Telefone / WhatsApp",
-                    content: "(84) 98129-5219",
+                    content: "(84) 3025-9789",
                     delay: 80,
                   },
                   {
