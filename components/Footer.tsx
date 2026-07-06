@@ -67,10 +67,10 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:vendas@natalmaq.com.br"
+                  href="mailto:contato@natalmaqferramentas.com.br"
                   className="transition hover:text-brand-500"
                 >
-                  vendas@natalmaq.com.br
+                  contato@natalmaqferramentas.com.br
                 </a>
               </li>
               <li className="text-ink-2/70">Seg–Sex 7h–18h · Sáb 7h–12h</li>

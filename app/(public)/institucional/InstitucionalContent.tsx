@@ -509,7 +509,7 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
                   {
                     Icon: Mail,
                     label: "E-mail",
-                    content: "vendas@natalmaq.com.br",
+                    content: "contato@natalmaqferramentas.com.br",
                     delay: 140,
                   },
                   {

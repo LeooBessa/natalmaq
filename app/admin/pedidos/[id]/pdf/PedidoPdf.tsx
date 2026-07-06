@@ -310,7 +310,7 @@ export function PedidoPdf({
 
         {/* Rodapé fixo */}
         <Text style={s.footer} fixed>
-          Natalmaq · (84) 3025-9789 · vendas@natalmaq.com.br · natalmaq.com.br
+          Natalmaq · (84) 3025-9789 · contato@natalmaqferramentas.com.br · natalmaqferramentas.com.br
         </Text>
       </Page>
     </Document>

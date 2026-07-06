@@ -14,7 +14,7 @@ export function GoogleSnippetPreview({
   /** segmento do breadcrumb antes do slug (ex.: "artigos", "guias"). */
   pathLabel = "artigos",
   /** domínio exibido no breadcrumb (sem protocolo). */
-  domain = "natalmaq.com.br",
+  domain = "natalmaqferramentas.com.br",
 }: {
   titulo: string;
   slug: string;

@@ -11,7 +11,7 @@ export function OgCardPreview({
   titulo,
   imagem,
   /** domínio exibido no rodapé do card. */
-  domain = "natalmaq.com.br",
+  domain = "natalmaqferramentas.com.br",
 }: {
   titulo: string;
   imagem: string | null;
