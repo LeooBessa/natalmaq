@@ -45,6 +45,17 @@ export type Banner = {
   ordem: number;
 };
 
+export type Vaga = {
+  id: string;
+  titulo: string;
+  descricao: string;
+  tipo: string | null;
+  local: string | null;
+  ativo: boolean;
+  ordem: number;
+  criado_em: string;
+};
+
 export type CartItem = {
   produto_id: string;
   codigo: string;

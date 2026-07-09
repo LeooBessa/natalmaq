@@ -8,6 +8,7 @@ import type {
   CupomHome,
   Marca,
   ProdutoComMarca,
+  Vaga,
 } from "@/types";
 
 const PRODUTO_SELECT = `
@@ -202,6 +203,19 @@ export async function listBanners(): Promise<Banner[]> {
     .eq("ativo", true)
     .order("ordem");
   return (data as Banner[]) ?? [];
+}
+
+// Vagas ativas — usadas na seção "Trabalhe conosco" do institucional.
+// Resiliente: se a tabela ainda não existir, retorna [] (não quebra a página).
+export async function listVagasAtivas(): Promise<Vaga[]> {
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from("vagas")
+    .select("id, titulo, descricao, tipo, local, ativo, ordem, criado_em")
+    .eq("ativo", true)
+    .order("ordem")
+    .order("criado_em", { ascending: false });
+  return (data as Vaga[]) ?? [];
 }
 
 export async function listCuponsHome(): Promise<CupomHome[]> {

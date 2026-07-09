@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { ArticlesCarousel } from "@/components/home/ArticlesCarousel";
 import type { Article } from "@/lib/articles";
+import type { Vaga } from "@/types";
 import {
   Camera,
   Check,
@@ -160,7 +161,13 @@ function PillBadge({ children }: { children: React.ReactNode }) {
 
 /* ── Page ────────────────────────────────────────────────────────────── */
 
-export default function InstitucionalContent({ artigos }: { artigos: Article[] }) {
+export default function InstitucionalContent({
+  artigos,
+  vagas,
+}: {
+  artigos: Article[];
+  vagas: Vaga[];
+}) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: KEYFRAMES }} />
@@ -565,6 +572,57 @@ export default function InstitucionalContent({ artigos }: { artigos: Article[] }
 
         {/* ÚLTIMOS ARTIGOS ─────────────────────────────────── */}
         <ArticlesCarousel articles={artigos} />
+
+        {/* TRABALHE CONOSCO / VAGAS ──────────────────────────── */}
+        {vagas.length > 0 && (
+          <section id="vagas" className="scroll-mt-24 bg-navy py-16 md:py-20">
+            <div className="mx-auto max-w-[1280px] px-4 md:px-6">
+              <div className="mb-8 text-center">
+                <p className="font-mono text-[11px] uppercase tracking-mono text-brand-400">
+                  Trabalhe conosco
+                </p>
+                <h2 className="mt-2 font-display text-[32px] leading-[0.95] tracking-tight text-white md:text-[44px]">
+                  Vagas abertas na Natalmaq
+                </h2>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {vagas.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex flex-col rounded-lg border border-white/15 bg-navy-800 p-6"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-display text-xl tracking-tight text-white">
+                        {v.titulo}
+                      </h3>
+                      {v.tipo && (
+                        <span className="rounded-full border border-brand-500/40 bg-brand-500/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-mono text-brand-400">
+                          {v.tipo}
+                        </span>
+                      )}
+                      {v.local && (
+                        <span className="font-mono text-[11px] text-white/50">{v.local}</span>
+                      )}
+                    </div>
+                    {v.descricao && (
+                      <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/70">
+                        {v.descricao}
+                      </p>
+                    )}
+                    <a
+                      href={`mailto:contato@natalmaqferramentas.com.br?subject=${encodeURIComponent(
+                        "Candidatura: " + v.titulo,
+                      )}`}
+                      className="mt-5 inline-flex w-fit items-center gap-2 bg-brand-500 px-5 py-2.5 font-mono text-[12px] font-bold uppercase tracking-mono text-white transition hover:bg-brand-400"
+                    >
+                      Candidatar-se por e-mail →
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
       </div>
       {/* No mobile o float global do layout cobre todas as páginas; aqui só desktop. */}
