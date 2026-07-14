@@ -53,9 +53,10 @@ export function UserNavBar() {
       <Link
         href="/minha-conta"
         title="Minha conta"
+        aria-label="Minha conta"
         className={cn(
           buttonVariants({ variant: "default", size: "lg" }),
-          "inline-flex h-11 items-center gap-2 border-2 border-navy bg-white font-mono text-[12px] font-bold uppercase tracking-mono text-navy hover:bg-bone hover:text-navy-800"
+          "inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 border-2 border-navy bg-white px-0 font-mono text-[12px] font-bold uppercase tracking-mono text-navy hover:bg-bone hover:text-navy-800 md:w-auto md:px-10"
         )}
       >
         <span className="pointer-events-none absolute inset-x-0 inset-y-0 mx-auto block h-0.5 w-3/4 bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100" />
@@ -69,14 +70,16 @@ export function UserNavBar() {
   return (
     <Link
       href="/auth"
+      title="Entrar"
+      aria-label="Entrar"
       className={cn(
         buttonVariants({ variant: "default", size: "lg" }),
-        "inline-flex h-11 items-center gap-2 border-2 border-navy bg-white font-mono text-[12px] font-bold uppercase tracking-mono text-navy hover:bg-bone hover:text-navy-800"
+        "inline-flex h-11 w-11 shrink-0 items-center justify-center gap-2 border-2 border-navy bg-white px-0 font-mono text-[12px] font-bold uppercase tracking-mono text-navy hover:bg-bone hover:text-navy-800 md:w-auto md:px-10"
       )}
     >
       <span className="pointer-events-none absolute inset-x-0 inset-y-0 mx-auto block h-0.5 w-3/4 bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-100" />
       <User className="h-5 w-5 shrink-0" strokeWidth={3} />
-      Entrar
+      <span className="hidden md:inline">Entrar</span>
       <span className="pointer-events-none absolute inset-x-0 -bottom-px mx-auto block h-0.5 w-3/4 bg-gradient-to-r from-transparent via-brand-500 to-transparent opacity-0 transition-all duration-500 ease-in-out group-hover:opacity-70" />
     </Link>
   );

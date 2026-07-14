@@ -51,7 +51,9 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${inter.variable} ${archivoBlack.variable} ${jetbrains.variable}`}
     >
-      <body className="min-h-screen bg-bone font-sans text-ink antialiased">
+      {/* overflow-x-clip (e não -hidden): impede scroll horizontal sem virar
+          um scroll container — o que quebraria o header sticky. */}
+      <body className="min-h-screen overflow-x-clip bg-bone font-sans text-ink antialiased">
         <JsonLd data={[organizationNode(), storeNode()]} />
         <AuthHashHandler />
         {children}
