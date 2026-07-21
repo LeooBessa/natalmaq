@@ -10,7 +10,11 @@
 // allowlist de "Redirect URLs" do Supabase, senão ele descarta e usa a
 // Site URL dele — foi o que quebrou a recuperação de senha na troca de domínio.
 
-const DOMINIO_PADRAO = "https://natalmaqferramentas.com.br";
+// Canônico é o www: o apex responde 308 -> www.natalmaqferramentas.com.br.
+// Usar o apex aqui faria todo canonical/sitemap apontar pra uma URL que
+// redireciona, e o `redirectTo` do Auth não bateria com o location.origin
+// real do navegador do cliente.
+const DOMINIO_PADRAO = "https://www.natalmaqferramentas.com.br";
 
 function normalizar(valor: string | undefined | null): string | null {
   const v = valor?.trim().replace(/\/+$/, "");
