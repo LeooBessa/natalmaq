@@ -16,7 +16,9 @@ export default function RecuperarSenhaPage() {
     const email = String(fd.get("email") ?? "").trim();
     startTransition(async () => {
       const sb = createSupabaseBrowserClient();
-      const redirectTo = `${location.origin}/auth/callback`;
+      // ?next explícito: no fluxo PKCE o callback recebe só `?code=`, sem o
+      // `type=recovery`, e sem isso cairia no destino padrão (/minha-conta).
+      const redirectTo = `${location.origin}/auth/callback?next=/auth/nova-senha`;
       const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) setErro("Erro ao enviar e-mail. Tente novamente.");
       else setEnviado(true);
