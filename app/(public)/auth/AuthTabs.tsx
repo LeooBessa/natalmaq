@@ -5,10 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Endereco } from "@/types";
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (typeof window !== "undefined" ? window.location.origin : "");
+import { SITE_URL } from "@/lib/site-url";
 
 type Tab = "entrar" | "cadastro";
 

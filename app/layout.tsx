@@ -6,9 +6,7 @@ import { AuthHashHandler } from "@/components/auth/AuthHashHandler";
 import { organizationNode, storeNode } from "@/lib/seo/jsonld";
 import { JsonLd } from "@/components/seo/JsonLd";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://natalmaq-main.vercel.app";
+import { SITE_URL } from "@/lib/site-url";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const archivoBlack = Archivo_Black({

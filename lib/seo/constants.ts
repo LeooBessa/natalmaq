@@ -3,9 +3,9 @@
 // Os @ids (#organization, #store, #website) permitem que páginas referenciem
 // a mesma entidade no @graph sem duplicar dados.
 
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://natalmaq-main.vercel.app";
+import { SITE_URL } from "@/lib/site-url";
+
+export { SITE_URL };
 
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const STORE_ID = `${SITE_URL}/#store`;

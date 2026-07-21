@@ -2,10 +2,7 @@ import type { MetadataRoute } from "next";
 
 import { listArtigos, listClusters, listLandings } from "@/lib/conteudo";
 import { listCategorias, listMarcas } from "@/lib/data";
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://natalmaq-main.vercel.app";
+import { SITE_URL } from "@/lib/site-url";
 
 export const revalidate = 3600;
 
