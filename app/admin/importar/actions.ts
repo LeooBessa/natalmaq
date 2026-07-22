@@ -163,7 +163,10 @@ async function importarPlanilha(
     if (peso_kg !== null) update.peso_kg = peso_kg;
     if (ativo !== null) update.ativo = ativo;
     if (destaque !== null) update.destaque = destaque;
-    if (preco_promocional !== null) update.preco_promocional = preco_promocional;
+    if (preco_promocional !== null) {
+      update.preco_promocional = preco_promocional;
+      update.promo_travada = true; // promo da planilha é manual → trava contra o sync do DS
+    }
     if (marcaSlug) {
       const mid = marcaPorSlug.get(marcaSlug);
       if (mid) update.marca_id = mid;
@@ -205,6 +208,7 @@ async function importarPlanilha(
         descricao,
         preco,
         preco_promocional,
+        promo_travada: preco_promocional !== null, // promo manual da planilha → trava
         estoque: estoque !== null ? Math.max(0, Math.floor(estoque)) : 0,
         peso_kg: peso_kg ?? 0,
         ativo: ativo ?? true,

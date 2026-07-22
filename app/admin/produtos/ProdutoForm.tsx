@@ -22,6 +22,7 @@ type Produto = {
   categoria_id: string | null;
   preco: number;
   preco_promocional: number | null;
+  promo_travada?: boolean;
   estoque: number;
   peso_kg: number;
   ativo: boolean;
@@ -167,6 +168,21 @@ export function ProdutoForm({
             defaultValue={produto.preco_promocional ?? ""}
             className={input}
           />
+          <label className="mt-2 flex items-start gap-2 text-xs text-zinc-600">
+            <input
+              type="checkbox"
+              name="promo_travada"
+              defaultChecked={produto.promo_travada ?? false}
+              className="mt-0.5"
+            />
+            <span>
+              Promoção manual — não deixar o sync do DS sobrescrever.
+              <br />
+              Ao salvar <b>com</b> um valor de promoção, a trava liga sozinha.
+              Marque isto <b>sem</b> valor para fixar “sem promoção” e barrar
+              uma promoção vinda do DS.
+            </span>
+          </label>
         </Field>
 
         <Field label="Estoque *">

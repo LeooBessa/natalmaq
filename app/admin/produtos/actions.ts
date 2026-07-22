@@ -30,6 +30,7 @@ type ProdutoForm = {
   categoria_id?: string | null;
   preco: number;
   preco_promocional?: number | null;
+  promo_travada: boolean;
   estoque: number;
   peso_kg: number;
   ativo: boolean;
@@ -39,6 +40,13 @@ type ProdutoForm = {
 
 function parseForm(formData: FormData): ProdutoForm {
   const nome = String(formData.get("nome") ?? "").trim();
+  const precoPromocional = n(formData.get("preco_promocional"));
+  // Trava = admin é dono da promoção; o sync do DS não sobrescreve.
+  // Digitou um valor => trava (é o caso mais comum, "minha promoção tem que
+  // ficar"). Deixou vazio => trava só se marcou a caixa explicitamente
+  // (serve pra fixar "sem promoção" e barrar promoção-lixo vinda do DS).
+  const promoTravada =
+    precoPromocional !== null || formData.get("promo_travada") === "on";
   return {
     codigo: String(formData.get("codigo") ?? "").trim(),
     nome,
@@ -47,7 +55,8 @@ function parseForm(formData: FormData): ProdutoForm {
     marca_id: (String(formData.get("marca_id") ?? "").trim() || null),
     categoria_id: (String(formData.get("categoria_id") ?? "").trim() || null),
     preco: n(formData.get("preco")) ?? 0,
-    preco_promocional: n(formData.get("preco_promocional")),
+    preco_promocional: precoPromocional,
+    promo_travada: promoTravada,
     estoque: Math.max(0, Math.floor(n(formData.get("estoque")) ?? 0)),
     peso_kg: n(formData.get("peso_kg")) ?? 0,
     ativo: formData.get("ativo") === "on",

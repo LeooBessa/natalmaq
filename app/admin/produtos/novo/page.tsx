@@ -29,6 +29,7 @@ export default async function NovoProdutoPage() {
           categoria_id: null,
           preco: 0,
           preco_promocional: null,
+          promo_travada: false,
           estoque: 0,
           peso_kg: 0,
           ativo: true,
