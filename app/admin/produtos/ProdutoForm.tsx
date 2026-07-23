@@ -166,8 +166,13 @@ export function ProdutoForm({
             min="0"
             name="preco_promocional"
             defaultValue={produto.preco_promocional ?? ""}
+            placeholder="menor que o preço normal"
             className={input}
           />
+          <p className="mt-1 text-xs text-zinc-500">
+            É o preço <b>com desconto</b> — precisa ser menor que o preço
+            normal. Deixe em branco se não houver promoção.
+          </p>
           <label className="mt-2 flex items-start gap-2 text-xs text-zinc-600">
             <input
               type="checkbox"

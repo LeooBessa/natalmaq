@@ -68,10 +68,33 @@ function parseForm(formData: FormData): ProdutoForm {
   };
 }
 
+// Promoção só faz sentido se for MENOR que o preço — senão não há desconto e
+// a loja (corretamente) não mostra nada, o que parece "não funcionou".
+function validarPromo(data: ProdutoForm): string | null {
+  if (
+    data.preco_promocional != null &&
+    data.preco_promocional >= data.preco
+  ) {
+    return "O preço promocional precisa ser MENOR que o preço normal. Deixe em branco se não houver promoção.";
+  }
+  return null;
+}
+
+// A promoção/estoque salvos precisam aparecer na loja na hora. A action só
+// revalidava o admin, então a vitrine só atualizava quando o ISR (60s) vencia
+// — e o cliente, olhando na hora, achava que não salvou.
+function revalidarLoja(slug?: string) {
+  revalidatePath("/");
+  revalidatePath("/catalogo");
+  if (slug) revalidatePath(`/produto/${slug}`);
+}
+
 export async function createProdutoAction(_prev: unknown, formData: FormData) {
   const sb = await createSupabaseServerClient();
   const data = parseForm(formData);
   if (!data.codigo || !data.nome) return { error: "Código e nome são obrigatórios." };
+  const erroPromo = validarPromo(data);
+  if (erroPromo) return { error: erroPromo };
 
   const { error, data: novo } = await sb
     .from("produtos")
@@ -81,6 +104,7 @@ export async function createProdutoAction(_prev: unknown, formData: FormData) {
   if (error) return { error: error.message };
 
   revalidatePath("/admin/produtos");
+  revalidarLoja(data.slug);
   redirect(`/admin/produtos/${novo.id}`);
 }
 
@@ -91,10 +115,14 @@ export async function updateProdutoAction(
 ) {
   const sb = await createSupabaseServerClient();
   const data = parseForm(formData);
+  const erroPromo = validarPromo(data);
+  if (erroPromo) return { error: erroPromo };
+
   const { error } = await sb.from("produtos").update(data).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/produtos");
   revalidatePath(`/admin/produtos/${id}`);
+  revalidarLoja(data.slug);
   return { ok: true };
 }
 
@@ -103,6 +131,7 @@ export async function deleteProdutoAction(id: string) {
   const { error } = await sb.from("produtos").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/produtos");
+  revalidarLoja();
   redirect("/admin/produtos");
 }
 
