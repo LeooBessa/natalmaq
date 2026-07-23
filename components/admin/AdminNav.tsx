@@ -14,6 +14,7 @@ import {
   FileImage,
   BarChart3,
   ImagePlus,
+  Images,
   Kanban,
   Archive,
   Search,
@@ -75,6 +76,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/importar", label: "Importar planilha", icon: FileSpreadsheet, exact: true },
       { href: "/admin/importar-fotos", label: "Importar fotos PDF", icon: FileImage },
       { href: "/admin/enriquecimento", label: "Enriquecer fotos", icon: ImagePlus },
+      { href: "/admin/produtos/aplicar-foto", label: "Foto em lote", icon: Images },
     ],
   },
 ];
