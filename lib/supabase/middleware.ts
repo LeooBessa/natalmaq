@@ -1,5 +1,8 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+
+const AUTH_TIMEOUT_MS = 4000;
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
@@ -30,10 +33,22 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Refresca a sessão (se houver) — IMPORTANTE para tokens em cookies HTTP-only
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Refresca a sessão (se houver) — IMPORTANTE para tokens em cookies HTTP-only.
+  // getUser() faz uma chamada de rede ao Supabase Auth; sem um teto, um Auth
+  // lento travaria o middleware até o 504 da Vercel. Cortamos em 4s e tratamos
+  // como "sem sessão" — em rota protegida isso manda pro login (fail-closed).
+  let user: User | null = null;
+  try {
+    const { data } = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("auth timeout")), AUTH_TIMEOUT_MS),
+      ),
+    ]);
+    user = data.user;
+  } catch {
+    // Auth lento/indisponível: segue como não autenticado.
+  }
 
   const path = request.nextUrl.pathname;
   const isAdminRoute = path.startsWith("/admin") && path !== "/admin/login";
