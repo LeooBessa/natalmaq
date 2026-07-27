@@ -82,8 +82,8 @@ export async function listProdutos(params?: {
     return { items, total };
   }
 
-  // SEM busca (navegação por catálogo/categoria/marca): em estoque -> com foto
-  // -> alfabética (migration 0033).
+  // SEM busca (navegação por catálogo/categoria/marca): produtos em DESTAQUE
+  // primeiro, depois em estoque -> com foto -> alfabética (migration 0033).
   let query = sb
     .from("produtos")
     .select(PRODUTO_SELECT, { count: "exact" })
@@ -99,6 +99,7 @@ export async function listProdutos(params?: {
   if (params?.em_estoque) query = query.gt("estoque", 0);
 
   const { data, count } = await query
+    .order("destaque", { ascending: false })
     .order("em_estoque", { ascending: false })
     .order("tem_foto", { ascending: false })
     .order("nome", { ascending: true })
