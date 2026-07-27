@@ -47,6 +47,43 @@ export async function listProdutos(params?: {
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE - 1;
 
+  // Resolve marca/categoria (slug -> id). Slug inexistente => sem resultados.
+  let marcaId: string | null = null;
+  if (params?.marca) {
+    const { data } = await sb.from("marcas").select("id").eq("slug", params.marca).maybeSingle();
+    if (!data) return { items: [], total: 0 };
+    marcaId = data.id as string;
+  }
+  let categoriaId: string | null = null;
+  if (params?.categoria) {
+    const { data } = await sb.from("categorias").select("id").eq("slug", params.categoria).maybeSingle();
+    if (!data) return { items: [], total: 0 };
+    categoriaId = data.id as string;
+  }
+
+  // COM busca textual: usa a função ranqueada (migration 0034) — entende
+  // abreviações (parafuso -> PARAF) e ordena por relevância, então os itens
+  // "base" vêm antes das variantes (s/c, c/chata…). Desempate: em estoque,
+  // com foto, alfabética.
+  const termo = params?.q?.trim();
+  if (termo) {
+    const { data } = await sb.rpc("buscar_produtos_rank", {
+      termo,
+      p_marca_id: marcaId,
+      p_categoria_id: categoriaId,
+      so_promocao: !!params?.promocao,
+      so_estoque: !!params?.em_estoque,
+      lim: PAGE_SIZE,
+      off: start,
+    });
+    const rows = (data ?? []) as Array<Record<string, unknown> & { total_count: number }>;
+    const total = rows.length ? Number(rows[0].total_count) : 0;
+    const items = rows.map(({ total_count: _t, ...rest }) => rest) as unknown as ProdutoComMarca[];
+    return { items, total };
+  }
+
+  // SEM busca (navegação por catálogo/categoria/marca): em estoque -> com foto
+  // -> alfabética (migration 0033).
   let query = sb
     .from("produtos")
     .select(PRODUTO_SELECT, { count: "exact" })
@@ -55,35 +92,13 @@ export async function listProdutos(params?: {
     // apenas dentro da página do produto pai.
     .is("produto_pai_id", null);
 
-  if (params?.marca) {
-    const marca = await sb
-      .from("marcas")
-      .select("id")
-      .eq("slug", params.marca)
-      .maybeSingle();
-    if (!marca.data) return { items: [], total: 0 };
-    query = query.eq("marca_id", marca.data.id);
-  }
-
-  if (params?.categoria) {
-    const cat = await sb
-      .from("categorias")
-      .select("id")
-      .eq("slug", params.categoria)
-      .maybeSingle();
-    if (!cat.data) return { items: [], total: 0 };
-    query = query.eq("categoria_id", cat.data.id);
-  }
-
+  if (marcaId) query = query.eq("marca_id", marcaId);
+  if (categoriaId) query = query.eq("categoria_id", categoriaId);
   if (params?.destaque) query = query.eq("destaque", true);
   if (params?.promocao) query = query.not("preco_promocional", "is", null);
   if (params?.em_estoque) query = query.gt("estoque", 0);
-  if (params?.q) query = query.ilike("nome", `%${params.q}%`);
 
   const { data, count } = await query
-    // Ordem (migration 0033): (1) EM ESTOQUE primeiro; (2) COM foto na frente
-    // (colunas geradas em_estoque/tem_foto); (3) alfabética por nome. Assim os
-    // disponíveis e com foto aparecem no topo, e o resto em ordem previsível.
     .order("em_estoque", { ascending: false })
     .order("tem_foto", { ascending: false })
     .order("nome", { ascending: true })
