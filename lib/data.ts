@@ -81,12 +81,12 @@ export async function listProdutos(params?: {
   if (params?.q) query = query.ilike("nome", `%${params.q}%`);
 
   const { data, count } = await query
-    // Ordem: (1) destaques; (2) produtos COM foto na frente (coluna gerada
-    // tem_foto — migration 0028); (3) por id (UUID = "embaralhado estável"),
-    // dando variedade de tipos dentro de cada grupo, consistente entre páginas.
-    .order("destaque", { ascending: false })
+    // Ordem (migration 0033): (1) EM ESTOQUE primeiro; (2) COM foto na frente
+    // (colunas geradas em_estoque/tem_foto); (3) alfabética por nome. Assim os
+    // disponíveis e com foto aparecem no topo, e o resto em ordem previsível.
+    .order("em_estoque", { ascending: false })
     .order("tem_foto", { ascending: false })
-    .order("id")
+    .order("nome", { ascending: true })
     .range(start, end);
 
   return {
