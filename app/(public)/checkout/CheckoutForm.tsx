@@ -24,7 +24,7 @@ type Props = {
 };
 
 export function CheckoutForm({ userId, cliente }: Props) {
-  const { itens, subtotal, pesoTotal, clear, cupom, aplicarCupom, removerCupom } = useCart();
+  const { itens, subtotal, subtotalSemPromo, temItemEmPromocao, pesoTotal, clear, cupom, aplicarCupom, removerCupom } = useCart();
 
   const [tipoEntrega, setTipoEntrega] = useState<TipoEntrega>("entrega");
   const [form, setForm] = useState({
@@ -106,7 +106,8 @@ export function CheckoutForm({ userId, cliente }: Props) {
     const codigo = cupomInput.trim().toUpperCase();
     if (!codigo) return;
     startCupomTransition(async () => {
-      const res = await validarCupomAction(codigo, subtotal());
+      // Cupom incide só sobre itens SEM promoção.
+      const res = await validarCupomAction(codigo, subtotalSemPromo());
       if (res.ok) {
         aplicarCupom({ codigo: res.codigo, descricao: res.descricao, desconto: res.desconto });
         setCupomInput("");
@@ -445,6 +446,12 @@ export function CheckoutForm({ userId, cliente }: Props) {
                 <p className="mt-1 text-[11px] text-brand-400">{cupomErro}</p>
               )}
             </div>
+          )}
+
+          {temItemEmPromocao() && (
+            <p className="text-[11px] leading-relaxed text-white/50">
+              Cupom não incide sobre itens em promoção.
+            </p>
           )}
 
           {tipoEntrega === "entrega" ? (

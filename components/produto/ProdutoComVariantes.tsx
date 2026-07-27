@@ -38,6 +38,7 @@ export function ProdutoComVariantes({ produto, variantes }: Props) {
       quantidade: 1,
       estoque: atual.estoque,
       peso_kg: Number(atual.peso_kg ?? 0),
+      em_promocao: !!temPromo,
     });
     setStickyAdded(true);
     setTimeout(() => setStickyAdded(false), 2000);

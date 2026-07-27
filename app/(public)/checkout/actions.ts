@@ -16,9 +16,12 @@ export type ValidarCupomResult =
   | { ok: true; codigo: string; descricao: string | null; desconto: number }
   | { ok: false; erro: string };
 
+// `valorElegivel` = subtotal SÓ dos itens sem promoção. O cupom não incide
+// sobre itens em promoção (não empilha desconto): o desconto e o pedido mínimo
+// são calculados sobre esse valor elegível.
 export async function validarCupomAction(
   codigo: string,
-  valorPedido: number,
+  valorElegivel: number,
 ): Promise<ValidarCupomResult> {
   const sb = getAdminSupabase();
   const { data: cupom } = await sb
@@ -36,16 +39,23 @@ export async function validarCupomAction(
   if (cupom.usos_max !== null && cupom.usos_atual >= cupom.usos_max)
     return { ok: false, erro: "Cupom atingiu o limite de usos" };
 
-  if (valorPedido < cupom.valor_minimo)
+  // Nada elegível = carrinho só com itens em promoção (ou vazio).
+  if (valorElegivel <= 0)
     return {
       ok: false,
-      erro: `Pedido mínimo de ${formatBRL(cupom.valor_minimo)} para este cupom`,
+      erro: "Cupom não vale para itens em promoção. Adicione um item sem promoção para usar o cupom.",
+    };
+
+  if (valorElegivel < cupom.valor_minimo)
+    return {
+      ok: false,
+      erro: `Pedido mínimo de ${formatBRL(cupom.valor_minimo)} (fora itens em promoção) para este cupom`,
     };
 
   const desconto =
     cupom.tipo === "percentual"
-      ? Math.round(((valorPedido * cupom.valor) / 100) * 100) / 100
-      : Math.min(cupom.valor, valorPedido);
+      ? Math.round(((valorElegivel * cupom.valor) / 100) * 100) / 100
+      : Math.min(cupom.valor, valorElegivel);
 
   return { ok: true, codigo: cupom.codigo, descricao: cupom.descricao, desconto };
 }

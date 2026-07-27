@@ -27,6 +27,7 @@ export function ProductCard({ produto }: { produto: ProdutoComMarca }) {
       quantidade: 1,
       estoque: produto.estoque,
       peso_kg: Number(produto.peso_kg ?? 0),
+      em_promocao: !!temPromo,
     });
   }
 

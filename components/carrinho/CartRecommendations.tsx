@@ -83,6 +83,9 @@ export function CartRecommendations() {
 function MiniCard({ produto }: { produto: ProdutoComMarca }) {
   const addItem = useCart((s) => s.addItem);
   const preco = produto.preco_promocional ?? produto.preco;
+  const emPromocao = !!(
+    produto.preco_promocional && produto.preco_promocional < produto.preco
+  );
   const img = produto.imagens?.[0];
   const inStock = produto.estoque > 0;
 
@@ -99,6 +102,7 @@ function MiniCard({ produto }: { produto: ProdutoComMarca }) {
       quantidade: 1,
       estoque: produto.estoque,
       peso_kg: Number(produto.peso_kg ?? 0),
+      em_promocao: emPromocao,
     });
   }
 

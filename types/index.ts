@@ -66,6 +66,9 @@ export type CartItem = {
   quantidade: number;
   estoque: number;
   peso_kg: number;
+  // Item está em promoção? Cupom não incide sobre itens em promoção.
+  // Opcional p/ compat com carrinhos já persistidos (ausente = tratado como false).
+  em_promocao?: boolean;
 };
 
 export type Endereco = {

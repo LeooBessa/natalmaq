@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from ..core.schemas import FreteIn, FreteOut
 from ..core.supabase import get_supabase
@@ -15,7 +15,7 @@ async def calcular(payload: FreteIn) -> FreteOut:
     cep = payload.cep
     res = (
         sb.table("fretes_regra")
-        .select("uf, faixa_cep_inicio, faixa_cep_fim, valor, prazo_dias, por_kg, ordem")
+        .select("uf, nome, faixa_cep_inicio, faixa_cep_fim, valor, prazo_dias, por_kg, ordem")
         .lte("faixa_cep_inicio", cep)
         .gte("faixa_cep_fim", cep)
         .order("ordem")
@@ -23,14 +23,13 @@ async def calcular(payload: FreteIn) -> FreteOut:
         .execute()
     )
     if not res.data:
-        raise HTTPException(
-            status_code=400,
-            detail="Não há regra de frete para esse CEP. Entre em contato.",
-        )
+        # Nenhuma regra casou (não deveria acontecer — há sempre a catch-all).
+        # Fallback seguro: frete padrão de R$6,99 em vez de erro.
+        return FreteOut(valor=6.99, prazo_dias=3, regiao="Padrão")
 
     regra = res.data[0]
     valor = float(regra["valor"]) + float(regra["por_kg"]) * float(payload.peso_total)
-    regiao = regra.get("uf") or "Brasil"
+    regiao = regra.get("nome") or regra.get("uf") or "Brasil"
 
     return FreteOut(
         valor=round(valor, 2),

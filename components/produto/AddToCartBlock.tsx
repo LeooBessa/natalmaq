@@ -15,6 +15,9 @@ export function AddToCartBlock({ produto }: { produto: ProdutoComMarca }) {
   const [adicionado, setAdicionado] = useState(false);
   const addItem = useCart((s) => s.addItem);
   const preco = produto.preco_promocional ?? produto.preco;
+  const emPromocao = !!(
+    produto.preco_promocional && produto.preco_promocional < produto.preco
+  );
 
   function handleAdd() {
     addItem({
@@ -27,6 +30,7 @@ export function AddToCartBlock({ produto }: { produto: ProdutoComMarca }) {
       quantidade: qty,
       estoque: produto.estoque,
       peso_kg: Number(produto.peso_kg ?? 0),
+      em_promocao: emPromocao,
     });
     setAdicionado(true);
     setTimeout(() => setAdicionado(false), 2000);

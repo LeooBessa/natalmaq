@@ -22,6 +22,9 @@ type CartState = {
   removerCupom: () => void;
   totalItens: () => number;
   subtotal: () => number;
+  // Subtotal só dos itens SEM promoção — base elegível para cupom.
+  subtotalSemPromo: () => number;
+  temItemEmPromocao: () => boolean;
   pesoTotal: () => number;
 };
 
@@ -72,6 +75,11 @@ export const useCart = create<CartState>()(
       totalItens: () => get().itens.reduce((s, i) => s + i.quantidade, 0),
       subtotal: () =>
         get().itens.reduce((s, i) => s + i.preco_unit * i.quantidade, 0),
+      subtotalSemPromo: () =>
+        get()
+          .itens.filter((i) => !i.em_promocao)
+          .reduce((s, i) => s + i.preco_unit * i.quantidade, 0),
+      temItemEmPromocao: () => get().itens.some((i) => i.em_promocao),
       pesoTotal: () =>
         get().itens.reduce((s, i) => s + i.peso_kg * i.quantidade, 0),
     }),

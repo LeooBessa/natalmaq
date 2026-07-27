@@ -22,6 +22,7 @@ import {
   Network,
   LayoutTemplate,
   Briefcase,
+  Truck,
 } from "lucide-react";
 
 type NavItem = {
@@ -67,6 +68,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/admin/categorias", label: "Categorias", icon: Grid3X3 },
       { href: "/admin/banners", label: "Banners", icon: Image },
       { href: "/admin/cupons", label: "Cupons", icon: Ticket },
+      { href: "/admin/frete", label: "Frete", icon: Truck },
       { href: "/admin/vagas", label: "Vagas", icon: Briefcase },
     ],
   },
