@@ -8,6 +8,19 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.supabase.co" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
+    // --- Redução de custo de Image Optimization na Vercel ---
+    // Imagens de produto praticamente não mudam — e quando trocam, a URL muda
+    // (o upload gera nome único). Cache longo evita RE-transformar a mesma
+    // imagem: era o padrão de 60s, agora 31 dias. É o maior ganho, sem perda.
+    minimumCacheTTL: 2678400,
+    // 1 formato só (já era o padrão) e 1 qualidade só (a padrão, 75). Deixar
+    // explícito trava a quantidade de transformações por imagem.
+    formats: ["image/webp"],
+    qualities: [75],
+    // Tira os tamanhos gigantes (2048 e 3840 = 4K), que a loja nunca exibe —
+    // cada tamanho a menos é uma variação a menos gerada/armazenada por imagem.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
   typedRoutes: false,
   experimental: {
