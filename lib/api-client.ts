@@ -28,10 +28,24 @@ async function request<T>(
     },
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API ${path} falhou (${res.status}): ${text}`);
+    throw new Error(await mensagemDeErro(res, path));
   }
   return res.json() as Promise<T>;
+}
+
+// A mensagem do erro vai direto pra tela do cliente. A API devolve
+// { detail: "..." } já escrito pra ele (ex.: estoque insuficiente); só quando
+// não há detail legível é que caímos num texto genérico — o técnico fica no console.
+async function mensagemDeErro(res: Response, path: string): Promise<string> {
+  const text = await res.text().catch(() => "");
+  try {
+    const detail = (JSON.parse(text) as { detail?: unknown }).detail;
+    if (typeof detail === "string" && detail.trim()) return detail.trim();
+  } catch {
+    // corpo não-JSON (HTML de erro, timeout do proxy…) — usa o genérico
+  }
+  console.error(`API ${path} falhou (${res.status}): ${text}`);
+  return "Não foi possível concluir agora. Tente novamente em instantes.";
 }
 
 export const api = {

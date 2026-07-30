@@ -81,19 +81,37 @@ async def criar_pedido(payload: PedidoIn) -> PedidoCriado:
     produtos_map = {p["id"]: p for p in (res.data or [])}
 
     if len(produtos_map) != len(ids):
-        raise HTTPException(status_code=400, detail="Item inexistente no carrinho")
+        raise HTTPException(
+            status_code=400,
+            detail="Um dos produtos do carrinho não está mais disponível. "
+            "Remova o item e tente de novo.",
+        )
 
     itens_detalhados: list[dict] = []
     subtotal = 0.0
     for it in payload.itens:
         p = produtos_map[it.produto_id]
         if not p["ativo"]:
-            raise HTTPException(status_code=400, detail=f"Produto inativo: {p['nome']}")
-        if it.quantidade > int(p["estoque"]):
             raise HTTPException(
                 status_code=400,
-                detail=f"Estoque insuficiente para {p['nome']} (disp.: {p['estoque']})",
+                detail=f"{p['nome']} não está mais disponível. "
+                "Remova o item do carrinho para continuar.",
             )
+        estoque = int(p["estoque"])
+        if it.quantidade > estoque:
+            # Mensagem vai direto pra tela do cliente: diz o que fazer, não só o que falhou.
+            if estoque <= 0:
+                detail = (
+                    f"{p['nome']} está sem estoque no momento. "
+                    "Remova o item do carrinho para continuar."
+                )
+            else:
+                unidade = "unidade" if estoque == 1 else "unidades"
+                detail = (
+                    f"Temos apenas {estoque} {unidade} de {p['nome']} em estoque. "
+                    "Ajuste a quantidade no carrinho para continuar."
+                )
+            raise HTTPException(status_code=400, detail=detail)
         preco_unit = float(p["preco_promocional"] or p["preco"])
         preco_total = round(preco_unit * it.quantidade, 2)
         subtotal += preco_total
