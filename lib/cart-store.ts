@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { CartItem } from "@/types";
+import type { AjusteEstoque, CartItem, EstoqueAtual } from "@/types";
 
 type CupomAplicado = {
   codigo: string;
@@ -17,6 +17,9 @@ type CartState = {
   addItem: (item: CartItem) => void;
   removeItem: (produto_id: string) => void;
   setQuantidade: (produto_id: string, quantidade: number) => void;
+  // Atualiza o estoque dos itens com o dado fresco do catálogo e devolve o que
+  // mudou, pra tela poder avisar o cliente.
+  aplicarEstoqueAtual: (atuais: EstoqueAtual[]) => AjusteEstoque[];
   clear: () => void;
   aplicarCupom: (cupom: CupomAplicado) => void;
   removerCupom: () => void;
@@ -68,6 +71,42 @@ export const useCart = create<CartState>()(
               : i,
           ),
         });
+      },
+      aplicarEstoqueAtual: (atuais) => {
+        const mapa = new Map(atuais.map((a) => [a.produto_id, a.estoque]));
+        const ajustes: AjusteEstoque[] = [];
+        let mudou = false;
+
+        const itens = get().itens.map((i) => {
+          // Ausente da consulta = inativo ou fora do catálogo: trata como esgotado.
+          const estoque = mapa.get(i.produto_id) ?? 0;
+
+          if (estoque <= 0) {
+            ajustes.push({ tipo: "esgotado", produto_id: i.produto_id, nome: i.nome });
+            if (i.estoque === 0) return i;
+            mudou = true;
+            return { ...i, estoque: 0 };
+          }
+
+          if (i.quantidade > estoque) {
+            ajustes.push({
+              tipo: "ajustado",
+              produto_id: i.produto_id,
+              nome: i.nome,
+              de: i.quantidade,
+              para: estoque,
+            });
+            mudou = true;
+            return { ...i, estoque, quantidade: estoque };
+          }
+
+          if (i.estoque === estoque) return i;
+          mudou = true;
+          return { ...i, estoque };
+        });
+
+        if (mudou) set({ itens });
+        return ajustes;
       },
       clear: () => set({ itens: [], cupom: null, propostaId: gerarPropostaId() }),
       aplicarCupom: (cupom) => set({ cupom }),

@@ -1,7 +1,30 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { CartItem } from "@/types";
+import type { CartItem, EstoqueAtual } from "@/types";
+
+/**
+ * Estoque atual dos produtos do carrinho, direto do catálogo.
+ * Produto que não volta na consulta (inativo ou removido) fica de fora da lista
+ * — quem chama trata a ausência como esgotado.
+ */
+export async function revalidarEstoqueAction(
+  ids: string[],
+): Promise<EstoqueAtual[]> {
+  if (ids.length === 0) return [];
+
+  const sb = await createSupabaseServerClient();
+  const { data } = await sb
+    .from("produtos")
+    .select("id, estoque")
+    .eq("ativo", true)
+    .in("id", ids);
+
+  return (data ?? []).map((p) => ({
+    produto_id: p.id as string,
+    estoque: Number(p.estoque) || 0,
+  }));
+}
 
 export async function syncCartAction(itens: CartItem[]): Promise<void> {
   const sb = await createSupabaseServerClient();

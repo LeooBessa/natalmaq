@@ -71,6 +71,26 @@ export type CartItem = {
   em_promocao?: boolean;
 };
 
+// `CartItem.estoque` é um retrato do momento em que o item entrou no carrinho.
+// O carrinho revalida contra o catálogo ao abrir, pra não deixar o cliente
+// descobrir a falta de estoque só quando o pedido é recusado no checkout.
+export type EstoqueAtual = {
+  produto_id: string;
+  estoque: number;
+};
+
+export type AjusteQuantidade = {
+  tipo: "ajustado";
+  produto_id: string;
+  nome: string;
+  de: number;
+  para: number;
+};
+
+export type AjusteEstoque =
+  | AjusteQuantidade
+  | { tipo: "esgotado"; produto_id: string; nome: string };
+
 export type Endereco = {
   cep: string;
   rua: string;
