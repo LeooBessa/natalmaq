@@ -63,9 +63,11 @@ export default {
         marquee: "marquee 30s linear infinite",
       },
       keyframes: {
+        // -100% da largura da própria faixa: ver CuponsStrip, que renderiza
+        // duas faixas idênticas pra emendar o loop.
         marquee: {
           "0%": { transform: "translateX(0%)" },
-          "100%": { transform: "translateX(-50%)" },
+          "100%": { transform: "translateX(-100%)" },
         },
       },
     },
